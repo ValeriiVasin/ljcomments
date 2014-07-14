@@ -218,10 +218,10 @@ var CommentUsername = React.createClass({
       <p className="b-leaf-username">
         <span className="b-leaf-username-name">
           <span className="ljuser  i-ljuser  i-ljuser-type-P">
-            <a href="http://canonnier.livejournal.com/profile" className="i-ljuser-profile">
-              <img className="i-ljuser-userhead ContextualPopup" src="http://l-files.livejournal.net/userhead/1232?v=1369302040" />
+            <a href={data.profile_url} className="i-ljuser-profile">
+              <img className="i-ljuser-userhead ContextualPopup" src={data.userhead_url} />
             </a>
-            <a href="http://canonnier.livejournal.com/" className="i-ljuser-username"><b>{data.journal}</b></a>
+            <a href={data.journal_url} className="i-ljuser-username"><b>{data.journal}</b></a>
           </span>
         </span>
       </p>
