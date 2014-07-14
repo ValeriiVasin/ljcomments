@@ -2,7 +2,9 @@
 var CommentList = React.createClass({
   render: function() {
     var commentNodes = this.props.data.map(function (comment) {
-      return <Comment key={comment.talkid} comment={comment}>{comment.article}</Comment>;
+      return comment.more ?
+            <CommentMore key={comment.talkid} comment={comment} /> :
+            <Comment key={comment.talkid} comment={comment} />;
     });
 
     return (
@@ -113,16 +115,7 @@ var Comment = React.createClass({
 
               <div className="b-leaf-details">
 
-                <p className="b-leaf-username">
-                  <span className="b-leaf-username-name">
-                    <span className="ljuser  i-ljuser  i-ljuser-type-P     ">
-                      <a href="http://canonnier.livejournal.com/profile" className="i-ljuser-profile">
-                        <img className="i-ljuser-userhead ContextualPopup" src="http://l-files.livejournal.net/userhead/1232?v=1369302040" />
-                      </a>
-                      <a href="http://canonnier.livejournal.com/" className="i-ljuser-username"><b>canonnier</b></a>
-                    </span>
-                  </span>
-                </p>
+                <CommentUsername data={this.props.comment.username} />
 
                 <p className="b-leaf-meta">
                   <span className="b-leaf-createdtime">July 14 2014, 11:24:49</span>
@@ -177,6 +170,61 @@ var Comment = React.createClass({
           </div>
         </div>
       </div>
+    );
+  }
+});
+
+/**
+ * Comment with more users
+ */
+var CommentMore = React.createClass({
+  render: function () {
+    var users = this.props.comment.ljusers.map(function (user) {
+      return (
+        <CommentUsername data={user} key={user.journal} />
+      );
+    });
+
+    return (
+      <div
+        className="b-tree-twig  b-tree-twig-3"
+        style={{marginLeft: this.props.comment.margin}}
+        data-tid="t"
+        >
+        <div className="b-leaf b-leaf-seemore  b-leaf-seemore-width" data-parent="940013260" data-dtalkids="940057292:940063180" data-updated-ts="1405364385" data-count="5">
+          <div className="b-leaf-inner">
+            <span className="b-leaf-seemore-more">
+              <a href="http://tema.livejournal.com/1719500.html?thread=940013260#t940013260" rel="nofollow" className="b-pseudo">
+              {this.props.comment.actions[0].title}
+              </a>
+            </span>
+            <span className="b-leaf-seemore-from">from</span>
+            <span className="b-leaf-seemore-users">{users}</span>
+            <span className="b-leaf-seemore-expand">
+              <a href="http://tema.livejournal.com/1719500.html?thread=940013260#t940013260" rel="nofollow" className="b-pseudo">Expand</a>
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+});
+
+var CommentUsername = React.createClass({
+  render: function () {
+    var data = Array.isArray(this.props.data) ? this.props.data[0] : this.props.data;
+
+    return (
+      <p className="b-leaf-username">
+        <span className="b-leaf-username-name">
+          <span className="ljuser  i-ljuser  i-ljuser-type-P">
+            <a href="http://canonnier.livejournal.com/profile" className="i-ljuser-profile">
+              <img className="i-ljuser-userhead ContextualPopup" src="http://l-files.livejournal.net/userhead/1232?v=1369302040" />
+            </a>
+            <a href="http://canonnier.livejournal.com/" className="i-ljuser-username"><b>{data.journal}</b></a>
+          </span>
+        </span>
+      </p>
     );
   }
 });
