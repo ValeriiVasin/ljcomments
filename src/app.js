@@ -115,7 +115,11 @@ var Comment = React.createClass({
 
               <div className="b-leaf-details">
 
-                <CommentUsername data={this.props.comment.username} />
+                <p className="b-leaf-username">
+                  <span className="b-leaf-username-name">
+                    <CommentUsername data={this.props.comment.username} />
+                  </span>
+                </p>
 
                 <p className="b-leaf-meta">
                   <span className="b-leaf-createdtime">July 14 2014, 11:24:49</span>
@@ -215,16 +219,12 @@ var CommentUsername = React.createClass({
     var data = Array.isArray(this.props.data) ? this.props.data[0] : this.props.data;
 
     return (
-      <p className="b-leaf-username">
-        <span className="b-leaf-username-name">
-          <span className="ljuser  i-ljuser  i-ljuser-type-P">
-            <a href={data.profile_url} className="i-ljuser-profile">
-              <img className="i-ljuser-userhead ContextualPopup" src={data.userhead_url} />
-            </a>
-            <a href={data.journal_url} className="i-ljuser-username"><b>{data.journal}</b></a>
-          </span>
-        </span>
-      </p>
+      <span className="ljuser  i-ljuser  i-ljuser-type-P">
+        <a href={data.profile_url} className="i-ljuser-profile">
+          <img className="i-ljuser-userhead ContextualPopup" src={data.userhead_url} />
+        </a>
+        <a href={data.journal_url} className="i-ljuser-username"><b>{data.journal}</b></a>
+      </span>
     );
   }
 });
