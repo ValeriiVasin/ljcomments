@@ -350,7 +350,103 @@ var CommentControl = React.createClass({
       </li>
     );
   }
-})
+});
+
+/**
+ * <CommentActions comment={comment} isFooter={true} />
+ */
+var CommentActions = React.createClass({
+  render: function () {
+    var actions = [];
+    var isFooter = Boolean(this.props.isFooter);
+
+    this.props.comment.actions.forEach(function (action) {
+      if ( action.allowed ) {
+        if ( isFooter === Boolean(action.footer) ) {
+          actions.push(<CommentAction comment={this.props.comment} />);
+        }
+      }
+    }, this);
+
+    return (
+      <ul class="b-leaf-actions">
+          {actions}
+          <li class="b-leaf-actions-item b-leaf-actions-new">
+            <span class="b-thisisnew">ml('talk.new')</span>
+          </li>
+      </ul>
+    );
+  }
+});
+
+/**
+ * <CommentAction comment={comment} />
+ */
+var CommentAction = React.createClass({
+  render: function () {
+    var comment = this.props.comment;
+    var action  = comment.action;
+
+    // render nothing, should move to CommentActions
+    if ( action.checkbox && !action.massactions ) {
+      return null;
+    }
+
+    // item classes
+    var itemClassnames = ['b-leaf-actions-item'];
+    itemClassnames.push(
+      'b-leaf-actions-' + (action.checkbox ? 'check' : action.name)
+    );
+    if ( action.active ) {
+      itemClassnames.push('active');
+    }
+
+    // body
+    var body = [];
+
+    if ( action.disabled ) {
+      body.push(action.title);
+    } else {
+      if ( action.checkbox ) {
+        body.push(
+          <input
+            type="checkbox"
+            id={'c' + comment.dtalkid}
+            name={'selected_' + comment.talkid}
+            className="b-leaf-actions-checkbox"
+            autoComplete="off"
+            />,
+          <label
+              htmlFor={'c' + comment.dtalkid}
+              className="b-leaf-actions-label"
+              >
+              {this.props.action.title}
+          </label>
+        );
+      } else {
+        var href = action.href ? action.href : '#';
+        var linkClass = action.name === 'permalink' ? '' : 'b-pseudo';
+
+        body.push(
+          <a
+            href={href}
+            rel="nofollow"
+            className={linkClass}
+            >{this.props.action.title}</a>
+        );
+        // @todo add More users here
+      }
+    }
+
+    return (
+      <li
+          className={itemClassnames}
+          >
+          {body}
+      </li>
+    );
+  }
+});
 
 React.renderComponent(
   <CommentBox url="comments.json" pollInterval={2000} />,
