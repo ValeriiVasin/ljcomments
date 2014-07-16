@@ -3,9 +3,9 @@ var CommentList = React.createClass({
   render: function() {
     var commentNodes = this.props.data.map(function (comment) {
       return comment.more ?
-            <CommentMore key={comment.talkid} comment={comment} /> :
-            <Comment key={comment.talkid} comment={comment} />;
-    });
+            <CommentMore key={comment.talkid} comment={comment} is_remote_sup={this.props.is_remote_sup} /> :
+            <Comment key={comment.talkid} comment={comment} is_remote_sup={this.props.is_remote_sup} />;
+    }, this);
 
     return (
       <div className="commentList">
@@ -85,7 +85,7 @@ var CommentBox = React.createClass({
     return (
       <div className="commentBox">
         <h1>Comments</h1>
-        <CommentList data={this.state.data} />
+        <CommentList data={this.state.data} is_remote_sup={this.props.is_remote_sup} />
         <CommentForm onCommentSubmit={this.handleCommentSubmit} />
       </div>
     );
@@ -164,33 +164,80 @@ var Comment = React.createClass({
  */
 var CommentMore = React.createClass({
   render: function () {
-    var users = this.props.comment.ljusers.map(function (user) {
-      return (
-        <LJUser user={user} key={user.journal} />
-      );
-    });
+    var comment = this.props.comment;
+
+    var leafClass = ['b-leaf', 'b-leaf-seemore'];
+    if ( comment.moreclass ) {
+      leafClass.push( 'b-leaf-seemore-' + comment.moreclass );
+    }
+
+    // actions
+    if ( comment.actions ) {
+      var actions = comment.actions.map(function (action) {
+        var href = action.href ? action.href : '#';
+
+        return (
+          <span class="b-leaf-seemore-more">
+            <a
+              href={href}
+              rel="nofollow"
+              class="b-pseudo"
+              >{action.title}</a>
+          </span>
+        );
+      });
+
+      // expand action
+      var href = comment.actions[0].href;
+      href = href || '#';
+
+      var expand = [
+        <span class="b-leaf-seemore-expand">
+          <a
+            href={href}
+            rel="nofollow"
+            class="b-pseudo"
+            >ml('talk.expandlink')</a>
+        </span>
+      ];
+    }
+
+    // ljusers block
+    if (this.props.is_remote_sup && comment.ljusers) {
+      var users = comment.ljusers.map(function (user) {
+        return (
+          user.anonymous ?
+            <span>ml('talk.anonuser')</span> :
+            <LJUser user={user} key={user.journal} />
+        );
+      });
+
+      var moreusers = comment.moreusers ? '&hellip;' : '';
+
+      var ljusers = [
+        <span className="b-leaf-seemore-from">ml('talk.from')</span>,
+        <span className="b-leaf-seemore-users">
+          {users}
+          {moreusers}
+        </span>
+      ];
+    }
 
     return (
       <div
-        className="b-tree-twig  b-tree-twig-3"
-        style={{marginLeft: this.props.comment.margin}}
-        data-tid="t"
-        >
-        <div className="b-leaf b-leaf-seemore  b-leaf-seemore-width" data-parent="940013260" data-dtalkids="940057292:940063180" data-updated-ts="1405364385" data-count="5">
-          <div className="b-leaf-inner">
-            <span className="b-leaf-seemore-more">
-              <a href="http://tema.livejournal.com/1719500.html?thread=940013260#t940013260" rel="nofollow" className="b-pseudo">
-              {this.props.comment.actions[0].title}
-              </a>
-            </span>
-            <span className="b-leaf-seemore-from">from</span>
-            <span className="b-leaf-seemore-users">{users}</span>
-            <span className="b-leaf-seemore-expand">
-              <a href="http://tema.livejournal.com/1719500.html?thread=940013260#t940013260" rel="nofollow" className="b-pseudo">Expand</a>
-            </span>
+          className={leafClass}
+          data-parent={comment.parent}
+          data-dtalkids={comment.data}
+          data-updated-ts={comment.touched}
+          data-count={comment.more}
+          >
+
+          <div class="b-leaf-inner">
+            {actions}
+            {ljusers}
+            {expand}
           </div>
-        </div>
-      </div>
+     </div>
     );
   }
 });
@@ -403,6 +450,6 @@ var CommentAction = React.createClass({
 });
 
 React.renderComponent(
-  <CommentBox url="comments.json" pollInterval={2000} />,
+  <CommentBox url="comments.json" is_remote_sup={true} />,
   document.getElementById('content')
 );
