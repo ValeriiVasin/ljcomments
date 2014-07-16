@@ -177,11 +177,11 @@ var CommentMore = React.createClass({
         var href = action.href ? action.href : '#';
 
         return (
-          <span class="b-leaf-seemore-more">
+          <span className="b-leaf-seemore-more">
             <a
               href={href}
               rel="nofollow"
-              class="b-pseudo"
+              className="b-pseudo"
               >{action.title}</a>
           </span>
         );
@@ -192,11 +192,11 @@ var CommentMore = React.createClass({
       href = href || '#';
 
       var expand = [
-        <span class="b-leaf-seemore-expand">
+        <span className="b-leaf-seemore-expand">
           <a
             href={href}
             rel="nofollow"
-            class="b-pseudo"
+            className="b-pseudo"
             >ml('talk.expandlink')</a>
         </span>
       ];
@@ -232,7 +232,7 @@ var CommentMore = React.createClass({
           data-count={comment.more}
           >
 
-          <div class="b-leaf-inner">
+          <div className="b-leaf-inner">
             {actions}
             {ljusers}
             {expand}
@@ -273,14 +273,14 @@ var ClippedComment = React.createClass({
             id={'t' + this.props.comment.dtalkid}
             >
 
-            <div class="b-leaf-inner">
-                <div class="b-leaf-cheader">
-                    <p class="b-leaf-status">{status}</p>
+            <div className="b-leaf-inner">
+                <div className="b-leaf-cheader">
+                    <p className="b-leaf-status">{status}</p>
                     {controls}
                     <CommentActions comment={this.props.comment} isFooter={false} />
                 </div>
 
-                <div class="b-leaf-footer">
+                <div className="b-leaf-footer">
                   <CommentActions comment={this.props.comment} isFooter={true} />
                 </div>
             </div>
