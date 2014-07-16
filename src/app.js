@@ -242,6 +242,53 @@ var CommentMore = React.createClass({
   }
 });
 
+/**
+ * <ClippedComment comment={comment} />
+ * Statement: deleted || !shown
+ */
+var ClippedComment = React.createClass({
+  render: function () {
+    var controls = this.props.comment.controls ?
+                   <CommentControls controls={this.props.comment.controls} /> :
+                   <span className="null" />;
+
+    var statuses = {
+      deleted: 'ml(\'talk.deletedpost\')',
+      screened: 'ml(\'talk.screenedpost\')',
+      spammed: 'ml(\'talk.spammedpost\')',
+      suspended: 'ml(\'talk.suspendedpost\')'
+    };
+
+    var status = statuses[this.props.comment.leafclass];
+
+    var leafClass = [
+      'b-leaf',
+      'b-leaf-clipped',
+      'b-leaf-' + this.props.comment.leafclass
+    ];
+
+    return (
+        <div
+            className={leafClass}
+            id={'t' + this.props.comment.dtalkid}
+            >
+
+            <div class="b-leaf-inner">
+                <div class="b-leaf-cheader">
+                    <p class="b-leaf-status">{status}</p>
+                    {controls}
+                    <CommentActions comment={this.props.comment} isFooter={false} />
+                </div>
+
+                <div class="b-leaf-footer">
+                  <CommentActions comment={this.props.comment} isFooter={true} />
+                </div>
+            </div>
+        </div>
+    );
+  }
+});
+
 var CommentCollapsed = React.createClass({
   render: function () {
     return (
