@@ -97,7 +97,7 @@ var Comment = React.createClass({
   render: function() {
     var controls = this.props.comment.controls ?
                    <CommentControls controls={this.props.comment.controls} /> :
-                   null;
+                   <span className="null" />;
 
     return (
       <div className="b-tree-twig b-tree-twig-1"
@@ -139,22 +139,7 @@ var Comment = React.createClass({
                   <span className="b-leaf-shorttime">12 hours ago</span>
                 </p>
 
-                <ul className="b-leaf-actions">
-                  <li className=" b-leaf-actions-item b-leaf-actions-check">
-                    <input type="checkbox" id="c939948748" name="selected_3671674" className="b-leaf-actions-checkbox" autoComplete="off" />
-                    <label htmlFor="c939948748" className="b-leaf-actions-label"> Check </label>
-                  </li>
-                  <li className=" b-leaf-actions-item b-leaf-actions-permalink  ">
-                    <a href="http://tema.livejournal.com/1719500.html?thread=939948748#t939948748" rel="nofollow">link</a>
-                  </li>
-                  <li className=" b-leaf-actions-item b-leaf-actions-collapse">
-                    <a href="http://tema.livejournal.com/1719500.html?thread=939948748#t939948748" rel="nofollow" className="b-pseudo">Collapse</a>
-                  </li>
-                  <li className=" b-leaf-actions-item b-leaf-actions-expand  ">
-                    <a href="http://tema.livejournal.com/1719500.html?thread=939948748#t939948748" rel="nofollow" className="b-pseudo">Expand</a>
-                  </li>
-                  <li className="b-leaf-actions-item b-leaf-actions-new"><span className="b-thisisnew">New comment</span></li>
-                </ul>
+                <CommentActions comment={this.props.comment} isFooter={false} />
 
                 {controls}
 
@@ -164,17 +149,7 @@ var Comment = React.createClass({
             <div className="b-leaf-article">{this.props.comment.article}</div>
 
             <div className="b-leaf-footer">
-              <ul className="b-leaf-actions">
-                <li className=" b-leaf-actions-item b-leaf-actions-reply">
-                  <a href="http://tema.livejournal.com/1719500.html?replyto=939948748" rel="nofollow" className="b-pseudo">Reply</a>
-                </li>
-                <li className=" b-leaf-actions-item b-leaf-actions-expandchilds">
-                  <a href="http://tema.livejournal.com/1719500.html?thread=939948748#t939948748" rel="nofollow" className="b-pseudo">Expand</a>
-                </li>
-                <li className="b-leaf-actions-item b-leaf-actions-new">
-                  <span className="b-thisisnew">New comment</span>
-                </li>
-              </ul>
+              <CommentActions comment={this.props.comment} isFooter={true} />
             </div>
 
           </div>
@@ -256,38 +231,13 @@ var CommentCollapsed = React.createClass({
                   <span className="b-leaf-shorttime">{this.props.comment.ctime}</span>
                 </p>
 
-                <ul className="b-leaf-actions">
-                  <li className=" b-leaf-actions-item b-leaf-actions-check">
-                    <input type="checkbox" id="c939996364" name="selected_3671860" className="b-leaf-actions-checkbox" autoComplete="off" />
-                    <label htmlFor="c939996364" className="b-leaf-actions-label"> Check </label>
-                  </li>
-
-                  <li className=" b-leaf-actions-item b-leaf-actions-permalink">
-                    <a href="http://tema.livejournal.com/1719500.html?thread=939996364#t939996364" rel="nofollow">link</a>
-                  </li>
-
-                  <li className=" b-leaf-actions-item b-leaf-actions-collapse">
-                    <a href="http://tema.livejournal.com/1719500.html?thread=939996364#t939996364" rel="nofollow" className="b-pseudo">Collapse</a>
-                  </li>
-
-                  <li className=" b-leaf-actions-item b-leaf-actions-expand  ">
-                    <a href="http://tema.livejournal.com/1719500.html?thread=939996364#t939996364" rel="nofollow" className="b-pseudo">Expand</a>
-                  </li>
-
-                  <li className="b-leaf-actions-item b-leaf-actions-new">
-                    <span className="b-thisisnew">New comment</span>
-                  </li>
-                </ul>
+                <CommentActions comment={this.props.comment} isFooter={false} />
 
               </div>
             </div>
 
             <div className="b-leaf-footer">
-              <ul className="b-leaf-actions">
-                <li className="b-leaf-actions-item b-leaf-actions-new">
-                  <span className="b-thisisnew">New comment</span>
-                </li>
-              </ul>
+              <CommentActions comment={this.props.comment} isFooter={true} />
             </div>
 
           </div>
@@ -360,19 +310,23 @@ var CommentActions = React.createClass({
     var actions = [];
     var isFooter = Boolean(this.props.isFooter);
 
+    if ( !this.props.comment.actions ) {
+      return <span className="null" />
+    }
+
     this.props.comment.actions.forEach(function (action) {
       if ( action.allowed ) {
         if ( isFooter === Boolean(action.footer) ) {
-          actions.push(<CommentAction comment={this.props.comment} />);
+          actions.push(<CommentAction comment={this.props.comment} action={action} />);
         }
       }
     }, this);
 
     return (
-      <ul class="b-leaf-actions">
+      <ul className="b-leaf-actions">
           {actions}
-          <li class="b-leaf-actions-item b-leaf-actions-new">
-            <span class="b-thisisnew">ml('talk.new')</span>
+          <li className="b-leaf-actions-item b-leaf-actions-new">
+            <span className="b-thisisnew">ml('talk.new')</span>
           </li>
       </ul>
     );
@@ -385,11 +339,11 @@ var CommentActions = React.createClass({
 var CommentAction = React.createClass({
   render: function () {
     var comment = this.props.comment;
-    var action  = comment.action;
+    var action  = this.props.action;
 
     // render nothing, should move to CommentActions
     if ( action.checkbox && !action.massactions ) {
-      return null;
+      return <span className="null" />;
     }
 
     // item classes
