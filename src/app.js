@@ -1,18 +1,17 @@
 /** @jsx React.DOM **/
 
 var STAT_PREFIX = 'http://stat.livejournal.com';
+var IS_REMOTE_SUP = true;
 
 var CommentList = React.createClass({
   render: function() {
-    var commentNodes = this.props.data.map(function (comment) {
-      return comment.more ?
-            <CommentMore key={comment.talkid} comment={comment} is_remote_sup={this.props.is_remote_sup} /> :
-            <Comment key={comment.talkid} comment={comment} is_remote_sup={this.props.is_remote_sup} />;
+    var comments = this.props.comments.map(function (comment) {
+      return <Twig comment={comment} key={comment.talkid} />;
     }, this);
 
     return (
-      <div className="commentList">
-        {commentNodes}
+      <div id="comments">
+        <div className="b-tree b-tree-root">{comments}</div>
       </div>
     );
   }
@@ -49,13 +48,13 @@ var CommentForm = React.createClass({
 
 var CommentBox = React.createClass({
   getInitialState: function () {
-    return { data: [] };
+    return { comments: [] };
   },
 
   loadCommentsFromServer: function() {
     if ( localStorage.getItem('comments') ) {
       this.setState({
-        data: JSON.parse(localStorage.getItem('comments'))
+        comments: JSON.parse(localStorage.getItem('comments'))
       });
 
       return;
@@ -76,7 +75,7 @@ var CommentBox = React.createClass({
 
   handleCommentSubmit: function (comment) {
     this.setState({
-      data: this.state.data.concat([comment])
+      data: this.state.comments.concat([comment])
     });
   },
 
@@ -86,78 +85,7 @@ var CommentBox = React.createClass({
 
   render: function() {
     return (
-      <div className="commentBox">
-        <h1>Comments</h1>
-        <CommentList data={this.state.data} is_remote_sup={this.props.is_remote_sup} />
-        <CommentForm onCommentSubmit={this.handleCommentSubmit} />
-      </div>
-    );
-  }
-});
-
-var Comment = React.createClass({
-
-  render: function() {
-    var controls = this.props.comment.controls ?
-                   <CommentControls controls={this.props.comment.controls} /> :
-                   <span className="null" />;
-
-    return (
-      <div className="b-tree-twig b-tree-twig-1"
-        style={{marginLeft: this.props.comment.margin}}
-        data-tid="t939948748"
-        >
-        <div
-          id="t939948748"
-          className="b-leaf"
-          data-username="canonnier"
-          data-displayname="canonnier"
-          data-updated-ts="1405322689"
-          data-full="1"
-          >
-          <div className="b-leaf-inner">
-            <div className="b-leaf-header">
-
-              <div className="b-leaf-userpic">
-                <span className="b-leaf-userpic-inner">
-                  <img
-                    src="http://l-userpic.livejournal.com/110496957/17593088"
-                    alt=""
-                    title="canonnier: pic#110496957"
-                    className="ContextualPopup"
-                    />
-                </span>
-              </div>
-
-              <div className="b-leaf-details">
-
-                <p className="b-leaf-username">
-                  <span className="b-leaf-username-name">
-                    <LJUser user={this.props.comment.username} />
-                  </span>
-                </p>
-
-                <p className="b-leaf-meta">
-                  <span className="b-leaf-createdtime">July 14 2014, 11:24:49</span>
-                  <span className="b-leaf-shorttime">12 hours ago</span>
-                </p>
-
-                <CommentActions comment={this.props.comment} isFooter={false} />
-
-                {controls}
-
-              </div>
-            </div>
-
-            <div className="b-leaf-article">{this.props.comment.article}</div>
-
-            <div className="b-leaf-footer">
-              <CommentActions comment={this.props.comment} isFooter={true} />
-            </div>
-
-          </div>
-        </div>
-      </div>
+      <CommentList comments={this.state.comments} />
     );
   }
 });
@@ -175,26 +103,26 @@ var Twig = React.createClass({
     }
 
     // comment
-    var comment;
+    var commentHtml;
     if ( comment.html ) {
-      comment = comment.html;
+      commentHtml = comment.html;
     } else {
       if (comment.more) {
-        comment = <CommentMore comment={comment} />
+        commentHtml = <CommentMore comment={comment} />
       } else if ( comment.deleted || !comment.shown ) {
-        comment = <CommentClipped comment={comment} />
+        commentHtml = <CommentClipped comment={comment} />
       } else {
-        comment = <CommentNormal comment={comment} />
+        commentHtml = <CommentNormal comment={comment} />
       }
     }
 
     return (
       <div
-          className={twigClass}
+          className={twigClass.join(' ')}
           style={{marginLeft: comment.margin}}
           data-tid={'t' + comment.dtalkid}
           >
-          {comment}
+          {commentHtml}
       </div>
     );
   }
@@ -245,7 +173,7 @@ var CommentMore = React.createClass({
     }
 
     // ljusers block
-    if (this.props.is_remote_sup && comment.ljusers) {
+    if (IS_REMOTE_SUP && comment.ljusers) {
       var users = comment.ljusers.map(function (user) {
         return (
           user.anonymous ?
@@ -267,7 +195,7 @@ var CommentMore = React.createClass({
 
     return (
       <div
-          className={leafClass}
+          className={leafClass.join(' ')}
           data-parent={comment.parent}
           data-dtalkids={comment.data}
           data-updated-ts={comment.touched}
@@ -303,15 +231,9 @@ var CommentClipped = React.createClass({
 
     var status = statuses[this.props.comment.leafclass];
 
-    var leafClass = [
-      'b-leaf',
-      'b-leaf-clipped',
-      'b-leaf-' + this.props.comment.leafclass
-    ];
-
     return (
         <div
-            className={leafClass}
+            className={'b-leaf b-leaf-clipped ' + this.props.comment.leafclass}
             id={'t' + this.props.comment.dtalkid}
             >
 
@@ -327,58 +249,6 @@ var CommentClipped = React.createClass({
                 </div>
             </div>
         </div>
-    );
-  }
-});
-
-var CommentCollapsed = React.createClass({
-  render: function () {
-    return (
-      <div
-        className=" b-tree-twig  b-tree-twig-4"
-        style={{marginLeft: this.props.comment.margin}}
-        data-tid="t939996364"
-        >
-        <div
-          id="t939996364"
-          className="b-leaf b-leaf-collapsed"
-          data-username="live_in_odessa"
-          data-displayname="live_in_odessa"
-          data-updated-ts="1405327017"
-          >
-          <div className="b-leaf-inner">
-            <div className="b-leaf-header">
-
-              <div className="b-leaf-userpic">
-                <span className="b-leaf-userpic-inner">
-                  <img src="http://l-stat.livejournal.net/img/userpics/userpic-user.png?v=15821" alt="" />
-                </span>
-              </div>
-
-              <div className="b-leaf-details">
-
-                <p className="b-leaf-username">
-                  <span className="b-leaf-username-name">
-                    <LJUser user={this.props.comment.username} />
-                  </span>
-                </p>
-
-                <p className="b-leaf-meta">
-                  <span className="b-leaf-shorttime">{this.props.comment.ctime}</span>
-                </p>
-
-                <CommentActions comment={this.props.comment} isFooter={false} />
-
-              </div>
-            </div>
-
-            <div className="b-leaf-footer">
-              <CommentActions comment={this.props.comment} isFooter={true} />
-            </div>
-
-          </div>
-        </div>
-      </div>
     );
   }
 });
@@ -417,10 +287,10 @@ var CommentNormal = React.createClass({
     // subject
     var subject = '';
     if (comment.subject) {
-      <h4 class="b-leaf-subject">
+      <h4 className="b-leaf-subject">
         <a
             href={comment.thread_url}
-            class="b-leaf-subject-link"
+            className="b-leaf-subject-link"
             >{comment.subject}</a>
       </h4>
     }
@@ -465,22 +335,22 @@ var CommentNormal = React.createClass({
     return (
       <div
           id={'t' + comment.dtalkid}
-          className={leafClass}
+          className={leafClass.join(' ')}
           data-username={comment.uname}
           data-displayname={comment.dname}
           data-updated-ts={comment.ctime_ts}
           data-full={comment.loaded ? 1 : 0}
           data-subject={comment.subject ? comment.subject : ''}
           >
-          <div class="b-leaf-inner">
-              <div class="b-leaf-header">
+          <div className="b-leaf-inner">
+              <div className="b-leaf-header">
                   <CommentUserpic comment={comment} />
-                  <div class="b-leaf-details">{details}</div>
+                  <div className="b-leaf-details">{details}</div>
               </div>
 
               {comment.article ? <div className="b-leaf-article">{comment.article}</div> : ''}
 
-              <div class="b-leaf-footer">
+              <div className="b-leaf-footer">
                   <CommentActions comment={comment} isFooter={true} />
               </div>
           </div>
@@ -560,13 +430,12 @@ var CommentControls = React.createClass({
  */
 var CommentControl = React.createClass({
   render: function () {
-    var classes = ['b-controls', 'b-controls-' + this.props.control.name];
     var href = this.props.control.href ? this.props.control.href : '#';
 
     return (
       <li className="b-leaf-controls-item">
           <a
-            className={classes}
+            className={'b-controls b-controls-' + this.props.control.name}
             title={this.props.control.title}
             href={href}
             rel="nofollow"
@@ -653,13 +522,12 @@ var CommentAction = React.createClass({
         );
       } else {
         var href = action.href ? action.href : '#';
-        var linkClass = action.name === 'permalink' ? '' : 'b-pseudo';
 
         body.push(
           <a
             href={href}
             rel="nofollow"
-            className={linkClass}
+            className={action.name === 'permalink' ? '' : 'b-pseudo'}
             >{this.props.action.title}</a>
         );
         // @todo add More users here
@@ -667,16 +535,12 @@ var CommentAction = React.createClass({
     }
 
     return (
-      <li
-          className={itemClassnames}
-          >
-          {body}
-      </li>
+      <li className={itemClassnames.join(' ')}>{body}</li>
     );
   }
 });
 
 React.renderComponent(
-  <CommentBox url="comments.json" is_remote_sup={true} />,
+  <CommentBox url="comments.json" />,
   document.getElementById('content')
 );
