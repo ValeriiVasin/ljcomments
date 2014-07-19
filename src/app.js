@@ -1,4 +1,7 @@
 /** @jsx React.DOM **/
+
+var STAT_PREFIX = 'http://stat.livejournal.com';
+
 var CommentList = React.createClass({
   render: function() {
     var commentNodes = this.props.data.map(function (comment) {
@@ -160,7 +163,46 @@ var Comment = React.createClass({
 });
 
 /**
+ * <Twig comment={comment} />
+ */
+var Twig = React.createClass({
+  render: function () {
+    var comment = this.props.comment;
+
+    var twigClass = ['b-tree-twig'];
+    if ( comment.level ) {
+      twigClass.push('b-tree-twig-' + comment.level);
+    }
+
+    // comment
+    var comment;
+    if ( comment.html ) {
+      comment = comment.html;
+    } else {
+      if (comment.more) {
+        comment = <CommentMore comment={comment} />
+      } else if ( comment.deleted || !comment.shown ) {
+        comment = <CommentClipped comment={comment} />
+      } else {
+        comment = <CommentNormal comment={comment} />
+      }
+    }
+
+    return (
+      <div
+          className={twigClass}
+          style={{marginLeft: comment.margin}}
+          data-tid={'t' + comment.dtalkid}
+          >
+          {comment}
+      </div>
+    );
+  }
+});
+
+/**
  * Comment with more users
+ * Statement: comment.more
  */
 var CommentMore = React.createClass({
   render: function () {
@@ -244,9 +286,9 @@ var CommentMore = React.createClass({
 
 /**
  * <ClippedComment comment={comment} />
- * Statement: deleted || !shown
+ * Statement: comment.deleted || !comment.shown
  */
-var ClippedComment = React.createClass({
+var CommentClipped = React.createClass({
   render: function () {
     var controls = this.props.comment.controls ?
                    <CommentControls controls={this.props.comment.controls} /> :
@@ -341,6 +383,112 @@ var CommentCollapsed = React.createClass({
   }
 });
 
+var CommentNormal = React.createClass({
+  render: function () {
+    var comment = this.props.comment;
+
+    // leaf classes
+    var leafClass = ['b-leaf'];
+    if ( comment.leafclass ) {
+      leafClass.push('b-leaf-' + comment.leafclass);
+    }
+    if ( comment.suspended ) {
+      leafClass.push('b-leaf-suspended');
+    }
+    if ( comment.tracked ) {
+      leafClass.push('b-leaf-tracked');
+    }
+    if ( comment.subclass ) {
+      leafClass.push('b-leaf-' + comment.subclass);
+    }
+    if ( comment.p_tracked ) {
+      leafClass.push('b-leaf-tracked-parent');
+    }
+    if ( comment.modereply ) {
+      leafClass.push('b-leaf-modereply');
+    }
+    if ( comment.uname === comment.poster ) {
+      leafClass.push('b-leaf-poster');
+    }
+    if ( comment.subject ) {
+      leafClass.push('b-leaf-withsubject');
+    }
+
+    // subject
+    var subject = '';
+    if (comment.subject) {
+      <h4 class="b-leaf-subject">
+        <a
+            href={comment.thread_url}
+            class="b-leaf-subject-link"
+            >{comment.subject}</a>
+      </h4>
+    }
+
+    // username
+    var username = '';
+    if (comment.username) {
+      if ( comment.deleted_poster ) {
+        username = comment.deleted_poster;
+      } else {
+        username = <LJUser user={comment.username} />
+      }
+    } else {
+      username = 'ml("talk.anonuser")';
+    }
+
+    // details
+    var details = [];
+
+    if ( comment.shown ) {
+      details.push(subject);
+      details.push(
+        <p className="b-leaf-username">
+            <span className="b-leaf-username-name">{username}</span>
+            {comment.ipaddr ? <span className="b-leaf-ipaddr">{comment.ipaddr}</span> : ''}
+        </p>
+      );
+      details.push(
+        <p className="b-leaf-meta">
+          {comment.ctime ? <span className="b-leaf-createdtime">{comment.ctime}</span> : ''}
+          {comment.stime ? <span className="b-leaf-shorttime">{comment.stime}</span> : ''}
+          {comment.etime ? <span className="b-leaf-edittime">{comment.ctime}</span> : ''}
+        </p>
+      );
+      details.push(<CommentActions comment={comment} isFooter={false} />);
+    }
+
+    if ( comment.loaded ) {
+      details.push(<CommentControls controls={comment.controls} />);
+    }
+
+    return (
+      <div
+          id={'t' + comment.dtalkid}
+          className={leafClass}
+          data-username={comment.uname}
+          data-displayname={comment.dname}
+          data-updated-ts={comment.ctime_ts}
+          data-full={comment.loaded ? 1 : 0}
+          data-subject={comment.subject ? comment.subject : ''}
+          >
+          <div class="b-leaf-inner">
+              <div class="b-leaf-header">
+                  <CommentUserpic comment={comment} />
+                  <div class="b-leaf-details">{details}</div>
+              </div>
+
+              {comment.article ? <div className="b-leaf-article">{comment.article}</div> : ''}
+
+              <div class="b-leaf-footer">
+                  <CommentActions comment={comment} isFooter={true} />
+              </div>
+          </div>
+      </div>
+    );
+  }
+});
+
 var LJUser = React.createClass({
   render: function () {
     var user = Array.isArray(this.props.user) ? this.props.user[0] : this.props.user;
@@ -356,11 +504,43 @@ var LJUser = React.createClass({
   }
 });
 
+var CommentUserpic = React.createClass({
+  render: function () {
+    var comment = this.props.comment;
+    var userpic;
+
+    if ( comment.userpic ) {
+      userpic = <img
+        alt=''
+        src={comment.userpic}
+        title={comment.upictitle ? comment.upictitle : ''}
+        />
+    } else {
+      var src = STAT_PREFIX + (comment.username ?
+        '/img/userpics/userpic-user.png?v=15821' :
+        '/img/userpics/userpic-anonymous.png?v=15821'
+      );
+
+      userpic = <img src={src} alt="" />
+    }
+
+    return (
+      <div className="b-leaf-userpic">
+          <span className="b-leaf-userpic-inner">{userpic}</span>
+      </div>
+    );
+  }
+});
+
 /**
  * <CommentControls controls={controls} />
  */
 var CommentControls = React.createClass({
   render: function () {
+    if ( !this.props.controls ) {
+      return <span className="null" />;
+    }
+
     var controls = [];
 
     this.props.controls.forEach(function (control) {
