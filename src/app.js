@@ -218,9 +218,13 @@ var CommentMore = React.createClass({
  */
 var CommentClipped = React.createClass({
   render: function () {
+    var comment = this.props.comment;
+
     var controls = this.props.comment.controls ?
                    <CommentControls controls={this.props.comment.controls} /> :
                    <span className="null" />;
+
+    var leafClass = ['b-leaf', 'b-leaf-clipped', comment.leafclass];
 
     var statuses = {
       deleted: 'ml(\'talk.deletedpost\')',
@@ -229,11 +233,11 @@ var CommentClipped = React.createClass({
       suspended: 'ml(\'talk.suspendedpost\')'
     };
 
-    var status = statuses[this.props.comment.leafclass];
+    var status = statuses[comment.leafclass];
 
     return (
         <div
-            className={'b-leaf b-leaf-clipped ' + this.props.comment.leafclass}
+            className={leafClass.join(' ')}
             id={'t' + this.props.comment.dtalkid}
             >
 
@@ -241,11 +245,11 @@ var CommentClipped = React.createClass({
                 <div className="b-leaf-cheader">
                     <p className="b-leaf-status">{status}</p>
                     {controls}
-                    <CommentActions comment={this.props.comment} isFooter={false} />
+                    <CommentActions comment={comment} isFooter={false} />
                 </div>
 
                 <div className="b-leaf-footer">
-                  <CommentActions comment={this.props.comment} isFooter={true} />
+                  <CommentActions comment={comment} isFooter={true} />
                 </div>
             </div>
         </div>
@@ -254,11 +258,30 @@ var CommentClipped = React.createClass({
 });
 
 var CommentNormal = React.createClass({
+  getInitialState: function () {
+    return {
+      hovered: false
+    }
+  },
+
+  onMouseEnter: function () {
+    this.setState({ hovered: true })
+  },
+
+  onMouseLeave: function () {
+    this.setState({ hovered: false })
+  },
+
   render: function () {
     var comment = this.props.comment;
 
     // leaf classes
     var leafClass = ['b-leaf'];
+
+    if ( this.state.hovered ) {
+      leafClass.push('b-leaf-hover')
+    }
+
     if ( comment.leafclass ) {
       leafClass.push('b-leaf-' + comment.leafclass);
     }
@@ -341,6 +364,8 @@ var CommentNormal = React.createClass({
           data-updated-ts={comment.ctime_ts}
           data-full={comment.loaded ? 1 : 0}
           data-subject={comment.subject ? comment.subject : ''}
+          onMouseEnter={this.onMouseEnter}
+          onMouseLeave={this.onMouseLeave}
           >
           <div className="b-leaf-inner">
               <div className="b-leaf-header">
