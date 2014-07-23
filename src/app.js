@@ -11,6 +11,7 @@ var CommentList = React.createClass({
 
     return (
       <div id="comments">
+        <CommentPaginator pages={10} count={254} />
         <div className="b-tree b-tree-root">{comments}</div>
       </div>
     );
@@ -412,9 +413,8 @@ var CommentUserpic = React.createClass({
         />
     } else {
       var src = STAT_PREFIX + (comment.username ?
-        '/img/userpics/userpic-user.png?v=15821' :
-        '/img/userpics/userpic-anonymous.png?v=15821'
-      );
+        '\/img\/userpics\/userpic-user.png?v=15821' :
+        '\/img\/userpics\/userpic-anonymous.png?v=15821');
 
       userpic = <img src={src} alt="" />
     }
@@ -561,6 +561,89 @@ var CommentAction = React.createClass({
 
     return (
       <li className={itemClassnames.join(' ')}>{body}</li>
+    );
+  }
+});
+
+/**
+ * <CommentPaginator count={count} pages={pages} page={page} />
+ */
+var CommentPaginator = React.createClass({
+  getInitialState: function () {
+    return {
+      page: this.props.page || 1
+    };
+  },
+
+  setPage: function (page) {
+    this.setState({ page: page });
+  },
+
+  prev: function () {
+    this.setState({
+      page: this.state.page > 1 ? this.state.page - 1 : this.state.page
+    });
+  },
+
+  next: function () {
+    this.setState({
+      page: this.state.page < this.props.pages ? this.state.page + 1 : this.state.page
+    });
+  },
+
+  render: function () {
+    var pages = [];
+    var pagesTotal = this.props.pages;
+    var currentPage = this.state.page;
+    var pageClasses;
+
+    var pagerClasses = ['b-pager'];
+
+    if ( this.state.page === 1 ) {
+      pagerClasses.push('b-pager-first');
+    }
+
+    if ( this.state.page === pagesTotal ) {
+      pagerClasses.push('b-pager-last');
+    }
+
+    for (var i = 1; i <= pagesTotal; i += 1) {
+      classes = 'b-pager-page ' + (i === currentPage ? 'b-pager-page-active' : '');
+      pages.push(
+        <li className={classes} key={i}>
+          <a
+            href="javascript:void(0)"
+            onClick={this.setPage.bind(this, i)}
+            >{i}</a>
+        </li>
+      );
+    }
+
+    return (
+      <div className="b-xylem">
+        <ul className="b-xylem-cells">
+          <li className="b-xylem-cell b-xylem-cell-add">
+            <a className="b-addcomment" href="http://tema.livejournal.com/1719500.html?mode=reply#add_comment">
+              <span className="b-addcomment-inner"><i className="b-addcomment-icon"></i>Post a new comment</span>
+            </a>
+          </li>
+          <li className="b-xylem-cell b-xylem-cell-amount">
+            <span className="js-amount">{this.props.count} comments</span>
+          </li>
+        </ul>
+
+        <div className={pagerClasses.join(' ')}>
+          <div className="b-pager-prev">
+            <a href="javascript:void(0)" onClick={this.prev} className="b-pager-link">Previous</a>
+          </div>
+
+          <ul className="b-pager-pages">{pages}</ul>
+
+          <div className="b-pager-next">
+            <a href="javascript:void(0)" onClick={this.next} className="b-pager-link">Next</a>
+          </div>
+        </div>
+      </div>
     );
   }
 });
