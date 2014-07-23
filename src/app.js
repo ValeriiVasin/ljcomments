@@ -6,7 +6,7 @@ var IS_REMOTE_SUP = true;
 var CommentList = React.createClass({
   render: function() {
     var comments = this.props.comments.map(function (comment) {
-      return <Twig comment={comment} key={comment.talkid} />;
+      return <Twig comment={comment} key={comment.dtalkid} />;
     }, this);
 
     return (
@@ -485,7 +485,7 @@ var CommentActions = React.createClass({
     this.props.comment.actions.forEach(function (action) {
       if ( action.allowed ) {
         if ( isFooter === Boolean(action.footer) ) {
-          actions.push(<CommentAction comment={this.props.comment} action={action} />);
+          actions.push(<CommentAction key={action.name} comment={this.props.comment} action={action} />);
         }
       }
     }, this);
