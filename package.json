@@ -1,0 +1,16 @@
+{
+  "name": "ljcomments",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "server & jsx -w src/ build/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "root@sniffy.valeriivasin.com:/opt/git/ljcomments.git"
+  },
+  "author": "",
+  "license": "ISC"
+}
