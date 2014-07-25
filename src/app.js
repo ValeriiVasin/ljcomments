@@ -53,39 +53,7 @@ var CommentList = React.createClass({
     }, this);
 
     return (
-      <div id="comments">
-        <CommentPaginator pages={10} count={254} />
-        <div className="b-tree b-tree-root">{comments}</div>
-      </div>
-    );
-  }
-});
-
-var CommentForm = React.createClass({
-  handleSubmit: function () {
-    var author = this.refs.author.getDOMNode().value.trim();
-    var text = this.refs.text.getDOMNode().value.trim();
-
-    if (!text || !author) {
-      return false;
-    }
-
-    // TODO: send request to the server
-    this.refs.author.getDOMNode().value = '';
-    this.refs.text.getDOMNode().value = '';
-
-    this.props.onCommentSubmit({ author: author, text: text });
-
-    return false;
-  },
-
-  render: function() {
-    return (
-      <form className="commentForm" onSubmit={this.handleSubmit}>
-        <input ref="author" placeholder="Your name" />
-        <input ref="text" placeholder="Say something..." />
-        <input type="submit" value="Post" />
-      </form>
+      <div className="b-tree b-tree-root">{comments}</div>
     );
   }
 });
@@ -131,7 +99,10 @@ var CommentBox = React.createClass({
     var comments = '';
 
     if ( this.state.comments.length ) {
-      comments = <CommentList comments={this.state.comments} />;
+      comments = <div id="comments">
+        <CommentPaginator pages={10} count={254} />
+        <CommentList comments={this.state.comments} />
+      </div>;
     }
 
     return (
