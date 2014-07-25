@@ -403,7 +403,7 @@ var CommentNormal = React.createClass({
                   <div className="b-leaf-details">{details}</div>
               </div>
 
-              {comment.article ? <div className="b-leaf-article">{comment.article}</div> : ''}
+              {comment.article ? <div className="b-leaf-article" dangerouslySetInnerHTML={{__html: comment.article}}></div> : ''}
 
               <div className="b-leaf-footer">
                   <CommentActions comment={comment} isFooter={true} />
