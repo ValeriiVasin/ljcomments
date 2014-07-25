@@ -61,6 +61,7 @@ var CommentList = React.createClass({
 var CommentBox = React.createClass({
   getInitialState: function () {
     return {
+      replies:  0,
       comments: []
     };
   },
@@ -86,8 +87,13 @@ var CommentBox = React.createClass({
           return;
         }
 
+        // parse levels and add margins
         Level.parse( data.comments );
-        this.setState({ comments: data.comments });
+
+        this.setState({
+          comments: data.comments,
+          replies: data.replycount
+        });
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
@@ -100,7 +106,7 @@ var CommentBox = React.createClass({
 
     if ( this.state.comments.length ) {
       comments = <div id="comments">
-        <CommentPaginator pages={10} count={254} />
+        <CommentPaginator pages={10} count={this.state.replies} />
         <CommentList comments={this.state.comments} />
       </div>;
     }
@@ -699,7 +705,7 @@ var LinkBox = React.createClass({
   render: function () {
     return (
       <form onSubmit={this.submit}>
-        <input ref="url" placeholder="Enter post url" value="http://tema.livejournal.com/1725576.html" />
+        <input ref="url" placeholder="Enter post url" defaultValue="http://tema.livejournal.com/1725576.html" />
         <input type="submit" value="Submit" />
       </form>
     );
