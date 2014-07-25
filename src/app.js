@@ -3,6 +3,11 @@
 var STAT_PREFIX = 'http://stat.livejournal.com';
 var IS_REMOTE_SUP = true;
 
+var PARAMS = {
+  journal: 'tema',
+  itemid:   1725576
+};
+
 /**
  * Add margins and levels
  */
@@ -62,17 +67,19 @@ var CommentBox = React.createClass({
   getInitialState: function () {
     return {
       replies:  0,
-      comments: []
+      comments: [],
+      page: 1
     };
   },
 
-  loadCommentsFromServer: function(params) {
+  loadCommentsFromServer: function(page) {
+
     var endpoint = [
-      'http://' + params.journal + '.livejournal.com/',
-      params.journal + '/__rpc_get_thread',
-      '?journal=' + params.journal,
-      '&itemid=' + params.itemid,
-      '&page=' + (params.page || 1)
+      'http://' + PARAMS.journal + '.livejournal.com/',
+      PARAMS.journal + '/__rpc_get_thread',
+      '?journal=' + PARAMS.journal,
+      '&itemid=' + PARAMS.itemid,
+      '&page=' + page
     ].join('');
 
     var url = 'http://jsonp.jit.su/?url=' + encodeURIComponent(endpoint) + '&callback=?';
@@ -101,19 +108,28 @@ var CommentBox = React.createClass({
     });
   },
 
+  changePage: function (page) {
+    console.log('change page: %d', page);
+    this.loadCommentsFromServer(page);
+  },
+
+  linkChange: function (obj) {
+    this.loadCommentsFromServer(obj.page || 1);
+  },
+
   render: function() {
     var comments = '';
 
     if ( this.state.comments.length ) {
       comments = <div id="comments">
-        <CommentPaginator pages={10} count={this.state.replies} />
+        <CommentPaginator pages={10} count={this.state.replies} change={this.changePage} />
         <CommentList comments={this.state.comments} />
       </div>;
     }
 
     return (
       <div>
-        <LinkBox change={this.loadCommentsFromServer} />
+        <LinkBox change={this.linkChange} />
         {comments}
       </div>
     );
@@ -605,19 +621,27 @@ var CommentPaginator = React.createClass({
   },
 
   setPage: function (page) {
+    if ( this.state.page === page ) {
+      return;
+    }
+
     this.setState({ page: page });
+
+    if ( typeof this.props.change === 'function' ) {
+      this.props.change(page);
+    }
   },
 
   prev: function () {
-    this.setState({
-      page: this.state.page > 1 ? this.state.page - 1 : this.state.page
-    });
+    this.setPage(
+      this.state.page > 1 ? this.state.page - 1 : this.state.page
+    );
   },
 
   next: function () {
-    this.setState({
-      page: this.state.page < this.props.pages ? this.state.page + 1 : this.state.page
-    });
+    this.setPage(
+      this.state.page < this.props.pages ? this.state.page + 1 : this.state.page
+    );
   },
 
   render: function () {
