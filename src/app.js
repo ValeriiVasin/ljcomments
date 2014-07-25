@@ -3,6 +3,49 @@
 var STAT_PREFIX = 'http://stat.livejournal.com';
 var IS_REMOTE_SUP = true;
 
+/**
+ * Add margins and levels
+ */
+var Level = (function () {
+  var parents = {};
+
+  function parse(comments) {
+    // save parents
+    comments.forEach(function (comment) {
+      var parent = comment.parent;
+
+      if ( parent ) {
+        parents[comment.dtalkid] = parent;
+      }
+    });
+
+    // add margin
+    comments.forEach(function (comment) {
+      if ( comment.hasOwnProperty('margin') ) {
+        return;
+      }
+
+      var level = getLevel(comment.dtalkid);
+      comment.level  = level;
+      comment.margin = (level - 1) * 30;
+    });
+  }
+
+  function getLevel(dtalkid) {
+    var level = 1;
+
+    while ( dtalkid = parents[dtalkid] ) {
+      level += 1;
+    }
+
+    return level;
+  }
+
+  return {
+    parse: parse
+  };
+}());
+
 var CommentList = React.createClass({
   render: function() {
     var comments = this.props.comments.map(function (comment) {
@@ -75,6 +118,7 @@ var CommentBox = React.createClass({
           return;
         }
 
+        Level.parse( data.comments );
         this.setState({ comments: data.comments });
       }.bind(this),
       error: function(xhr, status, err) {
