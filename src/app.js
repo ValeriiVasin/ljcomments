@@ -49,24 +49,33 @@ var CommentForm = React.createClass({
 
 var CommentBox = React.createClass({
   getInitialState: function () {
-    return { comments: [] };
+    return {
+      comments: []
+    };
   },
 
-  loadCommentsFromServer: function() {
-    if ( localStorage.getItem('comments') ) {
-      this.setState({
-        comments: JSON.parse(localStorage.getItem('comments'))
-      });
+  loadCommentsFromServer: function(params) {
+    var endpoint = [
+      'http://' + params.journal + '.livejournal.com/',
+      params.journal + '/__rpc_get_thread',
+      '?journal=' + params.journal,
+      '&itemid=' + params.itemid,
+      '&page=' + (params.page || 1)
+    ].join('');
 
-      return;
-    }
+    var url = 'http://jsonp.jit.su/?url=' + encodeURIComponent(endpoint) + '&callback=?';
 
+    console.log('url', url);
     $.ajax({
-      url: this.props.url,
-      dataType: 'json',
+      url: url,
+      dataType: 'jsonp',
       success: function(data) {
-        this.setState({ data: data });
-        localStorage.setItem('comments', JSON.stringify(data));
+        if (data.error) {
+          console.error('date error', data);
+          return;
+        }
+
+        this.setState({ comments: data.comments });
       }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
@@ -74,19 +83,18 @@ var CommentBox = React.createClass({
     });
   },
 
-  handleCommentSubmit: function (comment) {
-    this.setState({
-      data: this.state.comments.concat([comment])
-    });
-  },
-
-  componentWillMount: function () {
-    this.loadCommentsFromServer();
-  },
-
   render: function() {
+    var comments = '';
+
+    if ( this.state.comments.length ) {
+      comments = <CommentList comments={this.state.comments} />;
+    }
+
     return (
-      <CommentList comments={this.state.comments} />
+      <div>
+        <LinkBox change={this.loadCommentsFromServer} />
+        {comments}
+      </div>
     );
   }
 });
@@ -644,6 +652,41 @@ var CommentPaginator = React.createClass({
           </div>
         </div>
       </div>
+    );
+  }
+});
+
+// http://tema.livejournal.com/1725576.html
+var LinkBox = React.createClass({
+  submit: function (event) {
+    event.preventDefault();
+
+    var regexp = /^http:\/\/([^\.]+)\.livejournal\.com\/(\d+)\.html/;
+    var pageRegexp = /page=(\d+)/;
+    var url = this.refs.url.getDOMNode().value;
+    var result = {};
+
+    var matchUrl = url.match(regexp);
+    var matchPage = url.match(pageRegexp);
+
+    if ( matchUrl ) {
+      result.journal = matchUrl[1];
+      result.itemid = Number( matchUrl[2] );
+    }
+
+    if ( matchPage ) {
+      result.page = Number( matchPage[1] );
+    }
+
+    this.props.change( result );
+  },
+
+  render: function () {
+    return (
+      <form onSubmit={this.submit}>
+        <input ref="url" placeholder="Enter post url" value="http://tema.livejournal.com/1725576.html" />
+        <input type="submit" value="Submit" />
+      </form>
     );
   }
 });
