@@ -11,7 +11,7 @@ var PARAMS = {
 /**
  * Add margins and levels
  */
-var Level = (function () {
+var Comments = (function () {
   var parents = {};
 
   function parse(comments) {
@@ -98,7 +98,7 @@ var Level = (function () {
   };
 }());
 
-window.Level = Level;
+window.Comments = Comments;
 
 var CommentList = React.createClass({
   render: function() {
@@ -177,7 +177,7 @@ var CommentBox = React.createClass({
         }
 
         // parse levels and add margins
-        Level.parse( data.comments );
+        Comments.parse( data.comments );
 
         this.setState({
           comments: data.comments,
