@@ -72,13 +72,42 @@ var CommentBox = React.createClass({
     };
   },
 
+  componentDidMount: function () {
+    this.loadCommentsFromServer();
+  },
+
+  urlParams: function () {
+    var regexp = /^http:\/\/([^\.]+)\.livejournal\.com\/(\d+)\.html/;
+    var pageRegexp = /page=(\d+)/;
+    var url = this.props.url;
+    var result = {};
+
+    var matchUrl = url.match(regexp);
+    var matchPage = url.match(pageRegexp);
+
+    if ( matchUrl ) {
+      result.journal = matchUrl[1];
+      result.itemid = Number( matchUrl[2] );
+    }
+
+    if ( matchPage ) {
+      result.page = Number( matchPage[1] );
+    }
+
+    return result;
+  },
+
   loadCommentsFromServer: function(page) {
+    var params = $.extend(
+      this.urlParams(),
+      { page: page }
+    );
 
     var endpoint = [
-      'http://' + PARAMS.journal + '.livejournal.com/',
-      PARAMS.journal + '/__rpc_get_thread',
-      '?journal=' + PARAMS.journal,
-      '&itemid=' + PARAMS.itemid,
+      'http://' + params.journal + '.livejournal.com/',
+      params.journal + '/__rpc_get_thread',
+      '?journal=' + params.journal,
+      '&itemid=' + params.itemid,
       '&page=' + page
     ].join('');
 
@@ -91,6 +120,10 @@ var CommentBox = React.createClass({
       success: function(data) {
         if (data.error) {
           console.error('date error', data);
+          return;
+        }
+
+        if ( !this.isMounted() ) {
           return;
         }
 
@@ -113,24 +146,13 @@ var CommentBox = React.createClass({
     this.loadCommentsFromServer(page);
   },
 
-  linkChange: function (obj) {
-    this.loadCommentsFromServer(obj.page || 1);
-  },
-
   render: function() {
     var comments = '';
 
-    if ( this.state.comments.length ) {
-      comments = <div id="comments">
+    return (
+      <div id="comments">
         <CommentPaginator pages={10} count={this.state.replies} change={this.changePage} />
         <CommentList comments={this.state.comments} />
-      </div>;
-    }
-
-    return (
-      <div>
-        <LinkBox change={this.linkChange} />
-        {comments}
       </div>
     );
   }
@@ -737,6 +759,6 @@ var LinkBox = React.createClass({
 });
 
 React.renderComponent(
-  <CommentBox url="comments.json" />,
+  <CommentBox url="http://tema.livejournal.com/1725576.html" />,
   document.getElementById('content')
 );
