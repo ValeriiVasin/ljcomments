@@ -20,7 +20,9 @@ var Level = (function () {
       var parent = comment.parent;
 
       if ( parent ) {
-        parents[comment.dtalkid] = parent;
+        // MORE comments do not have dtalkid, but have data field
+        // data field contains some dtalkid => dtalkid:dtalkid:dtalkid
+        parents[comment.dtalkid || comment.data] = parent;
       }
     });
 
@@ -46,10 +48,57 @@ var Level = (function () {
     return level;
   }
 
+  /**
+   * Get child comments
+   * @param  {Number} dtalkid Talk id
+   * @return {Array}          Array of childs
+   */
+  function _getChilds(dtalkid) {
+    var result = [];
+
+    $.each(parents, function (key, value) {
+      if ( !value ) {
+        console.log(key);
+      }
+
+      if ( value === dtalkid ) {
+        // MORE comments key is not a number
+        result.push( Number(key) ? Number(key) : key );
+      }
+    });
+
+    return result;
+  }
+
+  /**
+   * Get thread comments
+   * @param  {Number} dtalkid Talk id
+   * @return {Array}         Array of comments that are in thread
+   */
+  function getThread(dtalkid) {
+    var result = [dtalkid];
+    var i = 0;
+
+    while ( i < result.length ) {
+      // push i-th element childs into array
+      Array.prototype.push.apply(
+        result,
+        _getChilds(result[i])
+      );
+
+      i += 1;
+    }
+
+    return result;
+  }
+
   return {
-    parse: parse
+    parse: parse,
+    getThread: getThread
   };
 }());
+
+window.Level = Level;
 
 var CommentList = React.createClass({
   render: function() {
