@@ -14,6 +14,15 @@ var PARAMS = {
 var Comments = (function () {
   var parents = {};
 
+  function __key(comment) {
+    if ( comment.dtalkid ) {
+      return comment.dtalkid;
+    }
+
+    // for MORE comment
+    return Number( comment.data.split(':')[0] )
+  }
+
   function parse(comments) {
     // save parents
     comments.forEach(function (comment) {
@@ -22,7 +31,7 @@ var Comments = (function () {
       if ( parent ) {
         // MORE comments do not have dtalkid, but have data field
         // data field contains some dtalkid => dtalkid:dtalkid:dtalkid
-        parents[comment.dtalkid || comment.data] = parent;
+        parents[ __key(comment) ] = parent;
       }
     });
 
@@ -57,13 +66,8 @@ var Comments = (function () {
     var result = [];
 
     $.each(parents, function (key, value) {
-      if ( !value ) {
-        console.log(key);
-      }
-
       if ( value === dtalkid ) {
-        // MORE comments key is not a number
-        result.push( Number(key) ? Number(key) : key );
+        result.push( Number(key) );
       }
     });
 
@@ -92,9 +96,21 @@ var Comments = (function () {
     return result;
   }
 
+  function debugInfo(comment) {
+    var obj = {};
+
+    obj.key   = __key(comment);
+    obj.above = comment.above || false;
+    obj.below = comment.below || false;
+
+    return <div className="comment-debug">{ JSON.stringify(obj) }</div>;
+  }
+
   return {
     parse: parse,
-    getThread: getThread
+    getThread: getThread,
+
+    debugInfo: debugInfo
   };
 }());
 
@@ -117,7 +133,8 @@ var CommentBox = React.createClass({
     return {
       replies:  0,
       comments: [],
-      page: 1
+      page: 1,
+      loading: true
     };
   },
 
@@ -163,6 +180,7 @@ var CommentBox = React.createClass({
     var url = 'http://jsonp.jit.su/?url=' + encodeURIComponent(endpoint) + '&callback=?';
 
     console.log('url', url);
+    this.setState({ loading: true });
     $.ajax({
       url: url,
       dataType: 'jsonp',
@@ -175,6 +193,8 @@ var CommentBox = React.createClass({
         if ( !this.isMounted() ) {
           return;
         }
+
+        this.setState({ loading: false });
 
         // parse levels and add margins
         Comments.parse( data.comments );
@@ -198,8 +218,13 @@ var CommentBox = React.createClass({
   render: function() {
     var comments = '';
 
+    var classes = React.addons.classSet({
+      'b-grove': true,
+      'b-grove-loading': this.state.loading
+    });
+
     return (
-      <div id="comments">
+      <div id="comments" className={classes}>
         <CommentPaginator pages={10} count={this.state.replies} change={this.changePage} />
         <CommentList comments={this.state.comments} />
       </div>
@@ -318,8 +343,8 @@ var CommentMore = React.createClass({
           data-updated-ts={comment.touched}
           data-count={comment.more}
           >
-
           <div className="b-leaf-inner">
+            { Comments.debugInfo(comment) }
             {actions}
             {ljusers}
             {expand}
@@ -357,8 +382,8 @@ var CommentClipped = React.createClass({
             className={leafClass.join(' ')}
             id={'t' + this.props.comment.dtalkid}
             >
-
             <div className="b-leaf-inner">
+                { Comments.debugInfo(comment) }
                 <div className="b-leaf-cheader">
                     <p className="b-leaf-status">{status}</p>
                     {controls}
@@ -485,6 +510,7 @@ var CommentNormal = React.createClass({
           onMouseLeave={this.onMouseLeave}
           >
           <div className="b-leaf-inner">
+              { Comments.debugInfo(comment) }
               <div className="b-leaf-header">
                   <CommentUserpic comment={comment} />
                   <div className="b-leaf-details">{details}</div>
