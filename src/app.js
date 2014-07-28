@@ -13,6 +13,7 @@ var PARAMS = {
  */
 var Comments = (function () {
   var parents = {};
+  var _comments = {};
 
   function __key(comment) {
     if ( comment.dtalkid ) {
@@ -20,18 +21,22 @@ var Comments = (function () {
     }
 
     // for MORE comment
-    return Number( comment.data.split(':')[0] )
+    return Number( comment.data.split(':')[0] );
   }
 
   function parse(comments) {
     // save parents
     comments.forEach(function (comment) {
       var parent = comment.parent;
+      var key = __key(comment);
+
+      // save comment
+      _comments[ key ] = comment;
 
       if ( parent ) {
         // MORE comments do not have dtalkid, but have data field
         // data field contains some dtalkid => dtalkid:dtalkid:dtalkid
-        parents[ __key(comment) ] = parent;
+        parents[ key ] = parent;
       }
     });
 
@@ -71,11 +76,13 @@ var Comments = (function () {
       }
     });
 
-    return result;
+    return result.sort(function (a, b) {
+      return a - b;
+    });
   }
 
   /**
-   * Get thread comments
+   * Get thread comments ordered for view
    * @param  {Number} dtalkid Talk id
    * @return {Array}         Array of comments that are in thread
    */
@@ -85,15 +92,40 @@ var Comments = (function () {
 
     while ( i < result.length ) {
       // push i-th element childs into array
-      Array.prototype.push.apply(
+      Array.prototype.splice.apply(
         result,
-        _getChilds(result[i])
+        [i + 1, 0].concat( _getChilds(result[i]) )
       );
 
       i += 1;
     }
 
     return result;
+  }
+
+  function getTree(page) {
+    console.time('tree');
+    var topLevel = [];
+
+    $.each(_comments, function (key, value) {
+      if ( !value.parent ) {
+        topLevel.push( __key(value) );
+      }
+    });
+
+    var tree = [];
+    topLevel.forEach(function (key) {
+      Array.prototype.push.apply(tree, getThread(key));
+    });
+
+    tree = tree.map(function (key) {
+      return _comments[key];
+    });
+
+    console.log(tree.length);
+    console.timeEnd('tree');
+
+    return tree;
   }
 
   function debugInfo(comment) {
@@ -109,6 +141,8 @@ var Comments = (function () {
   return {
     parse: parse,
     getThread: getThread,
+
+    getTree: getTree,
 
     debugInfo: debugInfo
   };
@@ -174,7 +208,7 @@ var CommentBox = React.createClass({
       params.journal + '/__rpc_get_thread',
       '?journal=' + params.journal,
       '&itemid=' + params.itemid,
-      '&page=' + page
+      '&page=' + (page || 1)
     ].join('');
 
     var url = 'http://jsonp.jit.su/?url=' + encodeURIComponent(endpoint) + '&callback=?';
@@ -200,7 +234,7 @@ var CommentBox = React.createClass({
         Comments.parse( data.comments );
 
         this.setState({
-          comments: data.comments,
+          comments: Comments.getTree(),
           replies: data.replycount
         });
       }.bind(this),
@@ -834,6 +868,6 @@ var LinkBox = React.createClass({
 });
 
 React.renderComponent(
-  <CommentBox url="http://tema.livejournal.com/1725576.html" />,
+  <CommentBox url="http://tema.livejournal.com/1720831.html" />,
   document.getElementById('content')
 );
