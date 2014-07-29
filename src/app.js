@@ -3,11 +3,6 @@
 var STAT_PREFIX = 'http://stat.livejournal.com';
 var IS_REMOTE_SUP = true;
 
-var PARAMS = {
-  journal: 'tema',
-  itemid:   1725576
-};
-
 /**
  * Add margins and levels
  */
@@ -134,6 +129,7 @@ var Comments = (function () {
     obj.key   = __key(comment);
     obj.above = comment.above || false;
     obj.below = comment.below || false;
+    obj.level = comment.level || false;
 
     return <div className="comment-debug">{ JSON.stringify(obj) }</div>;
   }
