@@ -19,6 +19,63 @@ var Comments = (function () {
     return Number( comment.data.split(':')[0] );
   }
 
+  var params;
+  function setUrl(url) {
+    var regexp = /^http:\/\/([^\.]+)\.livejournal\.com\/(\d+)\.html/;
+    var pageRegexp = /page=(\d+)/;
+
+    params = {};
+
+    var matchUrl = url.match(regexp);
+    var matchPage = url.match(pageRegexp);
+
+    if ( matchUrl ) {
+      params.journal = matchUrl[1];
+      params.itemid = Number( matchUrl[2] );
+    }
+
+    if ( matchPage ) {
+      params.page = Number( matchPage[1] );
+    }
+  }
+
+  function fetchPage(page) {
+    var defer = $.Deferred();
+
+    var endpoint = [
+      'http://' + params.journal + '.livejournal.com/',
+      params.journal + '/__rpc_get_thread',
+      '?journal=' + params.journal,
+      '&itemid=' + params.itemid,
+      '&page=' + (page || 1)
+    ].join('');
+
+    var url = 'http://jsonp.jit.su/?url=' + encodeURIComponent(endpoint) + '&callback=?';
+
+    console.log('fetch url:', url);
+    $.ajax({
+      url: url,
+      dataType: 'jsonp',
+      success: function (data) {
+        if ( data.error ) {
+          console.error('date error', data);
+          return;
+        }
+
+        // parse levels and add margins
+        parse( data.comments );
+
+        defer.resolve({
+          comments: getTree(),
+          replies: data.replycount
+        });
+      },
+      error: defer.reject
+    });
+
+    return defer.promise();
+  }
+
   function parse(comments) {
     // save parents
     comments.forEach(function (comment) {
@@ -140,6 +197,9 @@ var Comments = (function () {
 
     getTree: getTree,
 
+    setUrl:    setUrl,
+    fetchPage: fetchPage,
+
     debugInfo: debugInfo
   };
 }());
@@ -169,74 +229,24 @@ var CommentBox = React.createClass({
   },
 
   componentDidMount: function () {
+    Comments.setUrl( this.props.url );
     this.loadCommentsFromServer();
   },
 
-  urlParams: function () {
-    var regexp = /^http:\/\/([^\.]+)\.livejournal\.com\/(\d+)\.html/;
-    var pageRegexp = /page=(\d+)/;
-    var url = this.props.url;
-    var result = {};
-
-    var matchUrl = url.match(regexp);
-    var matchPage = url.match(pageRegexp);
-
-    if ( matchUrl ) {
-      result.journal = matchUrl[1];
-      result.itemid = Number( matchUrl[2] );
-    }
-
-    if ( matchPage ) {
-      result.page = Number( matchPage[1] );
-    }
-
-    return result;
-  },
-
   loadCommentsFromServer: function(page) {
-    var params = $.extend(
-      this.urlParams(),
-      { page: page }
-    );
+    var that = this;
 
-    var endpoint = [
-      'http://' + params.journal + '.livejournal.com/',
-      params.journal + '/__rpc_get_thread',
-      '?journal=' + params.journal,
-      '&itemid=' + params.itemid,
-      '&page=' + (page || 1)
-    ].join('');
-
-    var url = 'http://jsonp.jit.su/?url=' + encodeURIComponent(endpoint) + '&callback=?';
-
-    console.log('url', url);
     this.setState({ loading: true });
-    $.ajax({
-      url: url,
-      dataType: 'jsonp',
-      success: function(data) {
-        if (data.error) {
-          console.error('date error', data);
+    Comments.fetchPage(page).then(function (result) {
+        if ( !that.isMounted() ) {
           return;
         }
 
-        if ( !this.isMounted() ) {
-          return;
-        }
-
-        this.setState({ loading: false });
-
-        // parse levels and add margins
-        Comments.parse( data.comments );
-
-        this.setState({
-          comments: Comments.getTree(),
-          replies: data.replycount
+        that.setState({
+          loading:    false,
+          comments:   result.comments,
+          replycount: result.replycount
         });
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
     });
   },
 
