@@ -2,6 +2,7 @@
 
 var STAT_PREFIX = 'http://stat.livejournal.com';
 var IS_REMOTE_SUP = true;
+var cx = React.addons.classSet;
 
 var CommentList = React.createClass({
   render: function() {
@@ -66,7 +67,7 @@ var CommentBox = React.createClass({
   render: function() {
     var comments = '';
 
-    var classes = React.addons.classSet({
+    var classes = cx({
       'b-grove': true,
       'b-grove-loading': this.state.loading
     });
@@ -87,10 +88,10 @@ var Twig = React.createClass({
   render: function () {
     var comment = this.props.comment;
 
-    var twigClass = ['b-tree-twig'];
-    if ( comment.level ) {
-      twigClass.push('b-tree-twig-' + comment.level);
-    }
+    var twigClass = {
+      'b-tree-twig': true
+    };
+    twigClass['b-tree-twig-' + comment.level] = comment.level;
 
     // comment
     var commentHtml;
@@ -108,7 +109,7 @@ var Twig = React.createClass({
 
     return (
       <div
-          className={twigClass.join(' ')}
+          className={ cx(twigClass) }
           style={{marginLeft: comment.margin}}
           data-tid={'t' + comment.dtalkid}
           >
@@ -126,10 +127,11 @@ var CommentMore = React.createClass({
   render: function () {
     var comment = this.props.comment;
 
-    var leafClass = ['b-leaf', 'b-leaf-seemore'];
-    if ( comment.moreclass ) {
-      leafClass.push( 'b-leaf-seemore-' + comment.moreclass );
-    }
+    var leafClass = {
+      'b-leaf': true,
+      'b-leaf-seemore': true
+    };
+    leafClass['b-leaf-seemore-' + comment.moreclass] = comment.moreclass;
 
     // actions
     if ( comment.actions ) {
@@ -185,7 +187,7 @@ var CommentMore = React.createClass({
 
     return (
       <div
-          className={leafClass.join(' ')}
+          className={ cx(leafClass) }
           data-parent={comment.parent}
           data-dtalkids={comment.data}
           data-updated-ts={comment.touched}
@@ -214,7 +216,12 @@ var CommentClipped = React.createClass({
                    <CommentControls controls={this.props.comment.controls} /> :
                    <span className="null" />;
 
-    var leafClass = ['b-leaf', 'b-leaf-clipped', comment.leafclass];
+    var leafClass = {
+      'b-leaf': true,
+      'b-leaf-clipped': true
+    };
+
+    leafClass[comment.leafclass] = comment.leafclass;
 
     var statuses = {
       deleted: 'ml(\'talk.deletedpost\')',
@@ -227,7 +234,7 @@ var CommentClipped = React.createClass({
 
     return (
         <div
-            className={leafClass.join(' ')}
+            className={ cx(leafClass) }
             id={'t' + this.props.comment.dtalkid}
             >
             <div className="b-leaf-inner">
@@ -293,45 +300,21 @@ var CommentNormal = React.createClass({
     var comment = this.props.comment;
 
     // leaf classes
-    var leafClass = ['b-leaf'];
+    var leafClasses = {
+      'b-leaf':                true,
+      'b-leaf-hover':          this.state.hovered,
+      'b-leaf-expanding':      this.state.expanding,
+      'b-leaf-collapsed':      comment.collapsed,
+      'b-leaf-suspended':      comment.suspended,
+      'b-leaf-tracked':        comment.tracked,
+      'b-leaf-tracked-parent': comment.p_tracked,
+      'b-leaf-modereply':      comment.modereply,
+      'b-leaf-poster':         comment.uname === comment.poster,
+      'b-leaf-withsubject':    comment.subject
+    };
 
-    if ( this.state.hovered ) {
-      leafClass.push('b-leaf-hover')
-    }
-
-    if ( this.state.expanding ) {
-      leafClass.push('b-leaf-expanding');
-    }
-
-    if ( comment.leafclass ) {
-      leafClass.push('b-leaf-' + comment.leafclass);
-    }
-
-    if ( comment.collapsed ) {
-      leafClass.push('b-leaf-collapsed')
-    }
-
-    if ( comment.suspended ) {
-      leafClass.push('b-leaf-suspended');
-    }
-    if ( comment.tracked ) {
-      leafClass.push('b-leaf-tracked');
-    }
-    if ( comment.subclass ) {
-      leafClass.push('b-leaf-' + comment.subclass);
-    }
-    if ( comment.p_tracked ) {
-      leafClass.push('b-leaf-tracked-parent');
-    }
-    if ( comment.modereply ) {
-      leafClass.push('b-leaf-modereply');
-    }
-    if ( comment.uname === comment.poster ) {
-      leafClass.push('b-leaf-poster');
-    }
-    if ( comment.subject ) {
-      leafClass.push('b-leaf-withsubject');
-    }
+    leafClasses['b-leaf-' + comment.leafclass] = comment.leafclass;
+    leafClasses['b-leaf-' + comment.subclass]  = comment.subclass;
 
     // subject
     var subject = '';
@@ -384,7 +367,7 @@ var CommentNormal = React.createClass({
     return (
       <div
           id={'t' + comment.dtalkid}
-          className={leafClass.join(' ')}
+          className={ cx(leafClasses) }
           data-username={comment.uname}
           data-displayname={comment.dname}
           data-updated-ts={comment.ctime_ts}
@@ -558,13 +541,12 @@ var CommentAction = React.createClass({
     }
 
     // item classes
-    var itemClassnames = ['b-leaf-actions-item'];
-    itemClassnames.push(
-      'b-leaf-actions-' + (action.checkbox ? 'check' : action.name)
-    );
-    if ( action.active ) {
-      itemClassnames.push('active');
-    }
+    var itemClassnames = {
+      'b-leaf-actions-item': true,
+      'active': action.active
+    };
+    itemClassnames['b-leaf-actions-check'] = action.checkbox;
+    itemClassnames['b-leaf-actions-' + action.name] = !action.checkbox;
 
     // body
     var body = [];
@@ -604,7 +586,7 @@ var CommentAction = React.createClass({
     }
 
     return (
-      <li className={itemClassnames.join(' ')}>{body}</li>
+      <li className={ cx(itemClassnames) }>{body}</li>
     );
   }
 });
@@ -649,18 +631,18 @@ var CommentPaginator = React.createClass({
     var currentPage = this.state.page;
     var pageClasses;
 
-    var pagerClasses = ['b-pager'];
-
-    if ( this.state.page === 1 ) {
-      pagerClasses.push('b-pager-first');
-    }
-
-    if ( this.state.page === pagesTotal ) {
-      pagerClasses.push('b-pager-last');
-    }
+    var pagerClasses = cx({
+      'b-pager': true,
+      'b-pager-first': this.state.page === 1,
+      'b-pager-last':  this.state.page === pagesTotal
+    });
 
     for (var i = 1; i <= pagesTotal; i += 1) {
-      classes = 'b-pager-page ' + (i === currentPage ? 'b-pager-page-active' : '');
+      classes = cx({
+        'b-pager-page': true,
+        'b-pager-page-active': i === currentPage
+      });
+
       pages.push(
         <li className={classes} key={i}>
           <a
@@ -684,7 +666,7 @@ var CommentPaginator = React.createClass({
           </li>
         </ul>
 
-        <div className={pagerClasses.join(' ')}>
+        <div className={pagerClasses}>
           <div className="b-pager-prev">
             <a href="javascript:void(0)" onClick={this.prev} className="b-pager-link">Previous</a>
           </div>
