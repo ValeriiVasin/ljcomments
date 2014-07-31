@@ -1,6 +1,6 @@
 {
   "name": "ljcomments",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -9,8 +9,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "root@sniffy.valeriivasin.com:/opt/git/ljcomments.git"
+    "url": "git@github.com:ValeriiVasin/ljcomments.git"
   },
-  "author": "",
+  "author": "Valerii Vasin",
   "license": "ISC"
 }
