@@ -4,6 +4,9 @@
 ;(function () {
   'use strict';
 
+  var IS_DEBUG_MODE = false;
+
+
   // parents cache
   var parents = {};
 
@@ -264,6 +267,10 @@
   }
 
   function debugInfo(comment) {
+    if ( !IS_DEBUG_MODE ) {
+      return;
+    }
+
     var obj = {};
 
     obj.key   = __key(comment);
