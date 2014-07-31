@@ -4,8 +4,14 @@
 ;(function () {
   'use strict';
 
+  // parents cache
   var parents = {};
+
+  // comments cache
   var _comments = {};
+
+  // pages top comments cache
+  var _pages = {};
 
   function __key(comment) {
     if ( comment.dtalkid ) {
@@ -39,12 +45,14 @@
   function fetchPage(page) {
     var defer = $.Deferred();
 
+    page = page || 1;
+
     var endpoint = [
       'http://' + params.journal + '.livejournal.com/',
       params.journal + '/__rpc_get_thread',
       '?journal=' + params.journal,
       '&itemid=' + params.itemid,
-      '&page=' + (page || 1)
+      '&page=' + page
     ].join('');
 
     var url = 'http://jsonp.jit.su/?url=' + encodeURIComponent(endpoint) + '&callback=?';
@@ -61,6 +69,7 @@
 
         // parse levels and add margins
         parse( data.comments );
+        savePage( data.comments, page );
 
         defer.resolve({
           comments: getTree(),
@@ -71,6 +80,14 @@
     });
 
     return defer.promise();
+  }
+
+  function savePage(comments, page) {
+    _pages[page] = comments.filter(function (comment) {
+      return comment.level === 1;
+    }).map(function (comment) {
+      return __key(comment);
+    });
   }
 
   function parse(comments) {
