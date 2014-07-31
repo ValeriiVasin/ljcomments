@@ -250,8 +250,35 @@ var CommentClipped = React.createClass({
 var CommentNormal = React.createClass({
   getInitialState: function () {
     return {
-      hovered: false
+      hovered: false,
+      expanding: false
     }
+  },
+
+  expandStart: function (comment) {
+    if ( this.props.comment !== comment ) {
+      return;
+    }
+
+    this.setState({ expanding: true });
+  },
+
+  expandEnd: function (comment) {
+    if ( this.props.comment !== comment ) {
+      return;
+    }
+
+    this.setState({ expanding: false });
+  },
+
+  componentDidMount: function () {
+    LJ.Event.on('comment:expand:start', this.expandStart);
+    LJ.Event.on('comment:expand:end', this.expandEnd);
+  },
+
+  componentWillUnmount: function () {
+    LJ.Event.off('comment:expand:start', this.expandStart);
+    LJ.Event.off('comment:expand:end', this.expandEnd);
   },
 
   onMouseEnter: function () {
@@ -270,6 +297,10 @@ var CommentNormal = React.createClass({
 
     if ( this.state.hovered ) {
       leafClass.push('b-leaf-hover')
+    }
+
+    if ( this.state.expanding ) {
+      leafClass.push('b-leaf-expanding');
     }
 
     if ( comment.leafclass ) {
@@ -503,8 +534,13 @@ var CommentAction = React.createClass({
   handleClick: function (action, event) {
     event.preventDefault();
 
+    var that = this;
+
     if ( action === 'expand' ) {
-      Comments.expand(this.props.comment);
+      LJ.Event.trigger('comment:expand:start', this.props.comment);
+      Comments.expand(this.props.comment).then(function () {
+        LJ.Event.trigger('comment:expand:end', that.props.comment);
+      });
     }
 
     if ( action === 'collapse' ) {
