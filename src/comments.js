@@ -226,6 +226,15 @@
     return tree;
   }
 
+  /**
+   * Expand provided comment
+   * @param  {Object} comment Comment
+   * @return {Promise}        Promise that will be resolved when comment fetched
+   *
+   * @todo
+   *   Do not perform fetch if it (or it's parent) has been expanded before
+   *   Flag loaded: 1
+   */
   function expand(comment) {
     // request params
     var _params = {
@@ -238,6 +247,20 @@
     return fetch(_params).then(function () {
       LJ.Event.trigger('comments:update');
     });
+  }
+
+  /**
+   * Collapse thread comment is the root of
+   * @param  {Object} comment Comment
+   */
+  function collapse(comment) {
+    var key = __key(comment);
+
+    getThread(key).forEach(function (key) {
+      _comments[key].collapsed = 1;
+    });
+
+    LJ.Event.trigger('comments:update');
   }
 
   function debugInfo(comment) {
@@ -261,6 +284,7 @@
     fetchPage: fetchPage,
 
     expand: expand,
+    collapse: collapse,
 
     debugInfo: debugInfo
   };

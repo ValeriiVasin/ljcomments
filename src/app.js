@@ -275,6 +275,11 @@ var CommentNormal = React.createClass({
     if ( comment.leafclass ) {
       leafClass.push('b-leaf-' + comment.leafclass);
     }
+
+    if ( comment.collapsed ) {
+      leafClass.push('b-leaf-collapsed')
+    }
+
     if ( comment.suspended ) {
       leafClass.push('b-leaf-suspended');
     }
@@ -500,6 +505,10 @@ var CommentAction = React.createClass({
 
     if ( action === 'expand' ) {
       Comments.expand(this.props.comment);
+    }
+
+    if ( action === 'collapse' ) {
+      Comments.collapse(this.props.comment);
     }
   },
 
