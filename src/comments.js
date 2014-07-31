@@ -72,7 +72,7 @@
         savePage( data.comments, page );
 
         defer.resolve({
-          comments: getTree(),
+          comments: getTree(page),
           replies: data.replycount
         });
       },
@@ -82,6 +82,11 @@
     return defer.promise();
   }
 
+  /**
+   * Cache top level comment ids
+   * @param  {Array} comments  Page comments
+   * @param  {Number} page     Page number
+   */
   function savePage(comments, page) {
     _pages[page] = comments.filter(function (comment) {
       return comment.level === 1;
@@ -173,11 +178,17 @@
     console.time('tree');
     var topLevel = [];
 
-    $.each(_comments, function (key, value) {
-      if ( !value.parent ) {
-        topLevel.push( __key(value) );
-      }
-    });
+    if ( page && _pages[page] ) {
+      topLevel = _pages[page];
+    } else {
+
+      // whole top level comments
+      $.each(_comments, function (key, value) {
+        if ( !value.parent ) {
+          topLevel.push( __key(value) );
+        }
+      });
+    }
 
     var tree = [];
     topLevel.forEach(function (key) {
