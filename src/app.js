@@ -32,7 +32,7 @@ var CommentBox = React.createClass({
     this.loadCommentsFromServer();
 
     LJ.Event.on('comments:update', function () {
-      if ( !this.isMounted ) {
+      if ( !this.isMounted() ) {
         return;
       }
 
