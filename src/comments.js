@@ -45,36 +45,57 @@
   function fetchPage(page) {
     var defer = $.Deferred();
 
-    page = page || 1;
+    fetch({
+      itemid: params.itemid,
+      journal: params.journal,
+      page: page || 1
+    }).then(function (response) {
+      savePage(response.comments, page);
 
-    var endpoint = [
-      'http://' + params.journal + '.livejournal.com/',
-      params.journal + '/__rpc_get_thread',
-      '?journal=' + params.journal,
-      '&itemid=' + params.itemid,
-      '&page=' + page
-    ].join('');
+      defer.resolve({
+        replies: response.replycount,
+        comments: getTree(page)
+      });
+    }, defer.reject);
 
-    var url = 'http://jsonp.jit.su/?url=' + encodeURIComponent(endpoint) + '&callback=?';
+    return defer.promise();
+  }
 
+  function fetch(params) {
+    var endpoint = 'http://' + params.journal + '.livejournal.com/' +
+                    params.journal + '/__rpc_get_thread';
+
+    var query = '';
+    $.each(params, function (key, value) {
+      if (query.length === 0) {
+        query = '?';
+      } else {
+        query += '&';
+      }
+
+      query += key + '=' + value;
+    });
+
+    var url = 'http://jsonp.jit.su/?url=' + encodeURIComponent(endpoint + query) + '&callback=?';
+
+    var defer = $.Deferred();
     console.log('fetch url:', url);
+    console.time('fetch');
     $.ajax({
       url: url,
       dataType: 'jsonp',
-      success: function (data) {
-        if ( data.error ) {
-          console.error('date error', data);
+      success: function (response) {
+        console.timeEnd('fetch');
+
+        if ( response.error ) {
+          console.error('date error', response);
           return;
         }
 
         // parse levels and add margins
-        parse( data.comments );
-        savePage( data.comments, page );
+        parse( response.comments );
 
-        defer.resolve({
-          comments: getTree(page),
-          replies: data.replycount
-        });
+        defer.resolve(response);
       },
       error: defer.reject
     });
@@ -205,6 +226,20 @@
     return tree;
   }
 
+  function expand(comment) {
+    // request params
+    var _params = {
+      thread: __key(comment),
+      expand_all: 1,
+      journal: params.journal,
+      itemid: params.itemid
+    };
+
+    return fetch(_params).then(function () {
+      LJ.Event.trigger('comments:update');
+    });
+  }
+
   function debugInfo(comment) {
     var obj = {};
 
@@ -224,6 +259,8 @@
 
     setUrl:    setUrl,
     fetchPage: fetchPage,
+
+    expand: expand,
 
     debugInfo: debugInfo
   };

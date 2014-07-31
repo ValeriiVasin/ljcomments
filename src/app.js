@@ -27,7 +27,18 @@ var CommentBox = React.createClass({
 
   componentDidMount: function () {
     Comments.setUrl( this.props.url );
+
     this.loadCommentsFromServer();
+
+    LJ.Event.on('comments:update', function () {
+      if ( !this.isMounted ) {
+        return;
+      }
+
+      this.setState({
+        comments: Comments.getTree(this.state.page)
+      });
+    }, this);
   },
 
   loadCommentsFromServer: function(page) {
@@ -484,6 +495,14 @@ var CommentActions = React.createClass({
  * <CommentAction comment={comment} />
  */
 var CommentAction = React.createClass({
+  handleClick: function (action, event) {
+    event.preventDefault();
+
+    if ( action === 'expand' ) {
+      Comments.expand(this.props.comment);
+    }
+  },
+
   render: function () {
     var comment = this.props.comment;
     var action  = this.props.action;
@@ -532,6 +551,7 @@ var CommentAction = React.createClass({
             href={href}
             rel="nofollow"
             className={action.name === 'permalink' ? '' : 'b-pseudo'}
+            onClick={this.handleClick.bind(this, this.props.action.name)}
             >{this.props.action.title}</a>
         );
         // @todo add More users here
