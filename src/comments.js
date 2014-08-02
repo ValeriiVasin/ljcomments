@@ -180,24 +180,29 @@
     });
   }
 
+  // @todo invalidate cache
+  var _threads = {};
+
   /**
    * Get thread comments ordered for view
    * @param  {Number} dtalkid Talk id
    * @return {Array}         Array of comments that are in thread
    */
   function getThread(dtalkid) {
-    var result = [dtalkid];
-    var i = 0;
-
-    while ( i < result.length ) {
-      // push i-th element childs into array
-      Array.prototype.splice.apply(
-        result,
-        [i + 1, 0].concat( _getChilds(result[i]) )
-      );
-
-      i += 1;
+    if ( _threads[dtalkid] ) {
+      return _threads[dtalkid];
     }
+
+    var result = [dtalkid];
+
+    _getChilds(dtalkid).forEach(function (child) {
+      Array.prototype.push.apply(
+        result, getThread(child)
+      );
+    });
+
+    // cache whole thread
+    _threads[dtalkid] = result;
 
     return result;
   }
