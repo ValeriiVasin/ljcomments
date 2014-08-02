@@ -136,15 +136,19 @@
     });
 
     // add margin
+    console.time('add margin');
     comments.forEach(function (comment) {
       if ( comment.hasOwnProperty('margin') ) {
         return;
       }
 
-      var level = getLevel(comment.dtalkid);
-      comment.level  = level;
-      comment.margin = (level - 1) * 30;
+      if ( !comment.hasOwnProperty('level') ) {
+        comment.level = getLevel(comment.dtalkid);
+      }
+
+      comment.margin = (comment.level - 1) * 30;
     });
+    console.timeEnd('add margin');
   }
 
   function getLevel(dtalkid) {
