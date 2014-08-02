@@ -4,7 +4,7 @@
 ;(function () {
   'use strict';
 
-  var IS_DEBUG_MODE = false;
+  var IS_DEBUG_MODE = true;
 
 
   // parents cache
@@ -46,12 +46,23 @@
   }
 
   function fetchPage(page) {
+    page = page || 1;
+
     var defer = $.Deferred();
+
+    if ( _pages[page] ) {
+      defer.resolve({
+        replycount: 0,
+        comments: getTree(page)
+      });
+
+      return defer.promise();
+    }
 
     fetch({
       itemid: params.itemid,
       journal: params.journal,
-      page: page || 1
+      page: page
     }).then(function (response) {
       savePage(response.comments, page);
 
@@ -83,7 +94,6 @@
 
     var defer = $.Deferred();
     console.log('fetch url:', url);
-    console.time('fetch');
     $.ajax({
       url: url,
       dataType: 'jsonp',
@@ -232,7 +242,7 @@
       return _comments[key];
     });
 
-    console.log(tree.length);
+    console.log('Tree length: %d', tree.length);
     console.timeEnd('tree');
 
     return tree;
@@ -286,6 +296,7 @@
     obj.above = comment.above || false;
     obj.below = comment.below || false;
     obj.level = comment.level || false;
+    obj.loaded = comment.loaded || false;
 
     return JSON.stringify(obj);
   }
