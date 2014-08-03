@@ -4,7 +4,7 @@
 ;(function () {
   'use strict';
 
-  var IS_DEBUG_MODE = true;
+  var IS_DEBUG_MODE = false;
 
 
   // parents cache

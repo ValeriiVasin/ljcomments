@@ -60,7 +60,7 @@ var CommentBox = React.createClass({
   },
 
   changePage: function (page) {
-    console.log('change page: %d', page);
+    this.setState({ page: page });
     this.loadCommentsFromServer(page);
   },
 
@@ -517,9 +517,11 @@ var CommentAction = React.createClass({
   handleClick: function (action, event) {
     event.preventDefault();
 
+    console.log('action', action);
+
     var that = this;
 
-    if ( action === 'expand' ) {
+    if ( action === 'expand' || action === 'expandchilds' ) {
       LJ.Event.trigger('comment:expand:start', this.props.comment);
       Comments.expand(this.props.comment).then(function () {
         LJ.Event.trigger('comment:expand:end', that.props.comment);
