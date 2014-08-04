@@ -321,6 +321,7 @@
 
     var commentIdsObj = {};
     getThread(key).forEach(function (key) {
+      _comments[key].collapsed = 1;
       commentIdsObj[key] = true;
     });
 
