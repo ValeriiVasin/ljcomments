@@ -85,8 +85,39 @@ var CommentBox = React.createClass({
  * <Twig comment={comment} />
  */
 var Twig = React.createClass({
+  getInitialState: function () {
+    return {
+      comment: this.props.comment
+    };
+  },
+
+  updateComment: function (commentIdsObj) {
+    var key = Comments.key(this.state.comment);
+
+    if ( commentIdsObj[ key ] ) {
+      console.log('updating comment: ', key, Comments.getComment(key));
+      this.setState({
+        comment: Comments.getComment(key)
+      });
+    }
+  },
+
+  componentDidMount: function () {
+    LJ.Event.on('comment:update', this.updateComment);
+  },
+
+  componentWillUnmount: function () {
+    LJ.Event.off('comment:update', this.updateComment);
+  },
+
+  componentWillReceiveProps: function (nextProps) {
+    this.setState({
+      comment: nextProps.comment
+    });
+  },
+
   render: function () {
-    var comment = this.props.comment;
+    var comment = this.state.comment;
 
     var twigClass = {
       'b-tree-twig': true
@@ -260,17 +291,8 @@ var CommentNormal = React.createClass({
       hovered: false,
 
       // loading comment
-      expanding: false,
-
-      collapsed: this.props.comment.collapsed
+      expanding: false
     };
-  },
-
-  componentWillReceiveProps: function(nextProps) {
-    // update collapsed state from server props
-    this.setState({
-      collapsed: nextProps.comment.collapsed
-    });
   },
 
   expandStart: function (comment) {
@@ -289,34 +311,14 @@ var CommentNormal = React.createClass({
     this.setState({ expanding: false });
   },
 
-  collapseHandler: function (commentIdsObj) {
-    var key = Comments.key( this.props.comment );
-
-    if ( commentIdsObj[key] ) {
-      this.setState({ collapsed: true });
-    }
-  },
-
-  expandHandler: function (commentIdsObj) {
-    var key = Comments.key( this.props.comment );
-
-    if ( commentIdsObj[key] ) {
-      this.setState({ collapsed: false });
-    }
-  },
-
   componentDidMount: function () {
     LJ.Event.on('comment:expand:start', this.expandStart);
     LJ.Event.on('comment:expand:end', this.expandEnd);
-    LJ.Event.on('comment:expand:local', this.expandHandler);
-    LJ.Event.on('comment:collapse', this.collapseHandler);
   },
 
   componentWillUnmount: function () {
     LJ.Event.off('comment:expand:start', this.expandStart);
     LJ.Event.off('comment:expand:end', this.expandEnd);
-    LJ.Event.on('comment:expand:local', this.expandHandler);
-    LJ.Event.on('comment:collapse', this.collapseHandler);
   },
 
   onMouseEnter: function () {
@@ -335,7 +337,7 @@ var CommentNormal = React.createClass({
       'b-leaf':                true,
       'b-leaf-hover':          this.state.hovered,
       'b-leaf-expanding':      this.state.expanding,
-      'b-leaf-collapsed':      this.state.collapsed,
+      'b-leaf-collapsed':      comment.collapsed,
       'b-leaf-suspended':      comment.suspended,
       'b-leaf-tracked':        comment.tracked,
       'b-leaf-tracked-parent': comment.p_tracked,

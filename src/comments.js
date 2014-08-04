@@ -205,6 +205,10 @@
     return result;
   }
 
+  function getComment(dtalkid) {
+    return _comments[dtalkid];
+  }
+
   var _threads = {};
 
   /**
@@ -305,11 +309,11 @@
       console.info('All comments has been expanded before. Performing expansion without server request.');
 
       // keep model up-to-date
-      thread.forEach(function () {
+      thread.forEach(function (key) {
         _comments[key].collapsed = 0;
       });
 
-      LJ.Event.trigger('comment:expand:local', _toHash(thread));
+      LJ.Event.trigger('comment:update', _toHash(thread));
       return $.Deferred().resolve().promise();
     }
 
@@ -341,7 +345,7 @@
       _comments[key].collapsed = 1;
     });
 
-    LJ.Event.trigger('comment:collapse', _toHash(thread));
+    LJ.Event.trigger('comment:update', _toHash(thread));
   }
 
   function debugInfo(comment) {
@@ -379,9 +383,10 @@
     key: __key,
 
     parse: parse,
-    getThread: getThread,
 
-    getTree: getTree,
+    getComment: getComment,
+    getThread:  getThread,
+    getTree:    getTree,
 
     setUrl:    setUrl,
     fetchPage: fetchPage,
