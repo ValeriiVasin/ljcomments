@@ -279,10 +279,6 @@
    * Expand provided comment
    * @param  {Object} comment Comment
    * @return {Promise}        Promise that will be resolved when comment fetched
-   *
-   * @todo
-   *   Do not perform fetch if it (or it's parent) has been expanded before
-   *   Flag loaded: 1
    */
   function expand(comment) {
     var key = __key(comment);
@@ -297,9 +293,29 @@
 
     var thread = getThread( key );
 
-    // if there is MORE comment in the thread we are going to expand -
+    // Check if we need to load the thread from server or we have already loaded
+    // it (or it's parent)
+    var isAllLoaded = thread.every(function (key) {
+      return _comments[key].loaded;
+    });
+
+    if ( isAllLoaded ) {
+
+      // return resolved promise
+      console.info('All comments has been expanded before. Performing expansion without server request.');
+
+      // keep model up-to-date
+      thread.forEach(function () {
+        _comments[key].collapsed = 0;
+      });
+
+      LJ.Event.trigger('comment:expand:local', _toHash(thread));
+      return $.Deferred().resolve().promise();
+    }
+
+    // if there is a MORE comment in the thread we are going to expand -
     // invalidate threads cache
-    var hasMoreComment = thread.find(function (key){
+    var hasMoreComment = thread.some(function (key){
       return _comments[key].more;
     });
 
@@ -318,14 +334,14 @@
    */
   function collapse(comment) {
     var key = __key(comment);
+    var thread = getThread(key);
 
-    var commentIdsObj = {};
-    getThread(key).forEach(function (key) {
+    // keep model up-to-date
+    thread.forEach(function (key) {
       _comments[key].collapsed = 1;
-      commentIdsObj[key] = true;
     });
 
-    LJ.Event.trigger('comment:collapse', commentIdsObj);
+    LJ.Event.trigger('comment:collapse', _toHash(thread));
   }
 
   function debugInfo(comment) {
@@ -342,6 +358,21 @@
     obj.loaded = comment.loaded || false;
 
     return JSON.stringify(obj);
+  }
+
+  /**
+   * Utility function that converts array of strings/numbers to
+   * dictionary, where the strings/numbers are keys and `true` is the value
+   * @return {Object} Dictionary
+   *
+   * @example
+   *   _toHash([123, 456]); // => { '123': true, '456': true }
+   */
+  function _toHash(arr) {
+    return arr.reduce(function (result, value) {
+      result[value] = true;
+      return result;
+    }, {});
   }
 
   window.Comments = {

@@ -297,15 +297,26 @@ var CommentNormal = React.createClass({
     }
   },
 
+  expandHandler: function (commentIdsObj) {
+    var key = Comments.key( this.props.comment );
+
+    if ( commentIdsObj[key] ) {
+      this.setState({ collapsed: false });
+    }
+  },
+
   componentDidMount: function () {
     LJ.Event.on('comment:expand:start', this.expandStart);
     LJ.Event.on('comment:expand:end', this.expandEnd);
+    LJ.Event.on('comment:expand:local', this.expandHandler);
     LJ.Event.on('comment:collapse', this.collapseHandler);
   },
 
   componentWillUnmount: function () {
     LJ.Event.off('comment:expand:start', this.expandStart);
     LJ.Event.off('comment:expand:end', this.expandEnd);
+    LJ.Event.on('comment:expand:local', this.expandHandler);
+    LJ.Event.on('comment:collapse', this.collapseHandler);
   },
 
   onMouseEnter: function () {
