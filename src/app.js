@@ -258,8 +258,19 @@ var CommentNormal = React.createClass({
   getInitialState: function () {
     return {
       hovered: false,
-      expanding: false
-    }
+
+      // loading comment
+      expanding: false,
+
+      collapsed: this.props.comment.collapsed
+    };
+  },
+
+  componentWillReceiveProps: function(nextProps) {
+    // update collapsed state from server props
+    this.setState({
+      collapsed: nextProps.comment.collapsed
+    });
   },
 
   expandStart: function (comment) {
@@ -278,9 +289,18 @@ var CommentNormal = React.createClass({
     this.setState({ expanding: false });
   },
 
+  collapseHandler: function (commentIdsObj) {
+    var key = Comments.key( this.props.comment );
+
+    if ( commentIdsObj[key] ) {
+      this.setState({ collapsed: true });
+    }
+  },
+
   componentDidMount: function () {
     LJ.Event.on('comment:expand:start', this.expandStart);
     LJ.Event.on('comment:expand:end', this.expandEnd);
+    LJ.Event.on('comment:collapse', this.collapseHandler);
   },
 
   componentWillUnmount: function () {
@@ -289,11 +309,11 @@ var CommentNormal = React.createClass({
   },
 
   onMouseEnter: function () {
-    this.setState({ hovered: true })
+    this.setState({ hovered: true });
   },
 
   onMouseLeave: function () {
-    this.setState({ hovered: false })
+    this.setState({ hovered: false });
   },
 
   render: function () {
@@ -304,7 +324,7 @@ var CommentNormal = React.createClass({
       'b-leaf':                true,
       'b-leaf-hover':          this.state.hovered,
       'b-leaf-expanding':      this.state.expanding,
-      'b-leaf-collapsed':      comment.collapsed,
+      'b-leaf-collapsed':      this.state.collapsed,
       'b-leaf-suspended':      comment.suspended,
       'b-leaf-tracked':        comment.tracked,
       'b-leaf-tracked-parent': comment.p_tracked,

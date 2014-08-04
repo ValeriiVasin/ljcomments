@@ -278,11 +278,12 @@
   function collapse(comment) {
     var key = __key(comment);
 
+    var commentIdsObj = {};
     getThread(key).forEach(function (key) {
-      _comments[key].collapsed = 1;
+      commentIdsObj[key] = true;
     });
 
-    LJ.Event.trigger('comments:update');
+    LJ.Event.trigger('comment:collapse', commentIdsObj);
   }
 
   function debugInfo(comment) {
@@ -302,6 +303,8 @@
   }
 
   window.Comments = {
+    key: __key,
+
     parse: parse,
     getThread: getThread,
 
