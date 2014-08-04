@@ -190,8 +190,35 @@
     });
   }
 
-  // @todo invalidate cache
+  /**
+   * Get parent comments ids
+   * @param  {Number} dtalkid Talk id
+   * @return {Array}          Array of parents ids
+   */
+  function _getParents(dtalkid) {
+    var result = [];
+
+    while (dtalkid = parents[dtalkid]) {
+      result.push(dtalkid);
+    }
+
+    return result;
+  }
+
   var _threads = {};
+
+  /**
+   * Invalidate thread cache
+   * Notice: all parent threads should be invalidated as well
+   * @param  {Number} key Talk id
+   */
+  function _invalidateThread(key) {
+    delete _threads[key];
+
+    _getParents(key).forEach(function (key) {
+      delete _threads[key];
+    });
+  }
 
   /**
    * Get thread comments ordered for view
@@ -258,13 +285,27 @@
    *   Flag loaded: 1
    */
   function expand(comment) {
+    var key = __key(comment);
+
     // request params
     var _params = {
-      thread: __key(comment),
+      thread: key,
       expand_all: 1,
       journal: params.journal,
       itemid: params.itemid
     };
+
+    var thread = getThread( key );
+
+    // if there is MORE comment in the thread we are going to expand -
+    // invalidate threads cache
+    var hasMoreComment = thread.find(function (key){
+      return _comments[key].more;
+    });
+
+    if ( hasMoreComment ) {
+      _invalidateThread( key );
+    }
 
     return fetch(_params).then(function () {
       LJ.Event.trigger('comments:update');
