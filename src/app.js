@@ -95,7 +95,6 @@ var Twig = React.createClass({
     var key = Comments.key(this.state.comment);
 
     if ( commentIdsObj[ key ] ) {
-      console.log('updating comment: ', key, Comments.getComment(key));
       this.setState({
         comment: Comments.getComment(key)
       });
@@ -296,7 +295,7 @@ var CommentNormal = React.createClass({
   },
 
   expandStart: function (comment) {
-    if ( this.props.comment !== comment ) {
+    if ( Comments.key(this.props.comment) !== Comments.key(comment) ) {
       return;
     }
 
@@ -304,7 +303,7 @@ var CommentNormal = React.createClass({
   },
 
   expandEnd: function (comment) {
-    if ( this.props.comment !== comment ) {
+    if ( Comments.key(this.props.comment) !== Comments.key(comment) ) {
       return;
     }
 

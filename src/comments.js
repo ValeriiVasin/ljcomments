@@ -328,7 +328,15 @@
     }
 
     return fetch(_params).then(function () {
-      LJ.Event.trigger('comments:update');
+
+      // structure changed: render all comments
+      if ( hasMoreComment ) {
+        console.info('Comments structure has been changed. Update all comments.');
+        LJ.Event.trigger('comments:update');
+      } else {
+        console.info('Comments structure is not changed after expand. Update comments locally for the thread.');
+        LJ.Event.trigger('comment:update', _toHash(thread));
+      }
     });
   }
 
