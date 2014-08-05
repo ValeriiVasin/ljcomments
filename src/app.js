@@ -108,6 +108,12 @@ var Thread = React.createClass({
       comment:  Comments.getComment(this.props.dtalkid),
       children: Comments.getChildren(this.props.dtalkid)
     });
+
+    // because children threads props did not change - we should trigger update for
+    // each children thread as well
+    this.state.children.forEach(function (dtalkid) {
+      LJ.Event.trigger('thread:update', dtalkid);
+    });
   },
 
   componentDidMount: function () {
@@ -168,6 +174,7 @@ var Twig = React.createClass({
 
   render: function () {
     var comment = this.state.comment;
+    var key = Comments.key(comment);
 
     var twigClass = {
       'b-tree-twig': true
@@ -180,11 +187,11 @@ var Twig = React.createClass({
       commentHtml = comment.html;
     } else {
       if (comment.more) {
-        commentHtml = <CommentMore comment={comment} />
+        commentHtml = <CommentMore comment={comment} key={key} />
       } else if ( comment.deleted || !comment.shown ) {
-        commentHtml = <CommentClipped comment={comment} />
+        commentHtml = <CommentClipped comment={comment} key={key} />
       } else {
-        commentHtml = <CommentNormal comment={comment} />
+        commentHtml = <CommentNormal comment={comment} key={key} />
       }
     }
 

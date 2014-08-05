@@ -122,7 +122,6 @@
    * @param  {Number} page     Page number
    */
   function savePage(comments, page) {
-    console.log('save page', comments, page);
     _pages[page] = comments.filter(function (comment) {
       return comment.level === 1;
     }).map(function (comment) {
@@ -131,7 +130,6 @@
   }
 
   function getThreadsForPage(page) {
-    console.log('get threads for page: ', page,  _pages[page]);
     return _pages[page];
   }
 
@@ -319,7 +317,7 @@
         _comments[key].collapsed = 0;
       });
 
-      LJ.Event.trigger('comment:update', _toHash(thread));
+      LJ.Event.trigger('thread:update', key);
       return $.Deferred().resolve().promise();
     }
 
@@ -334,15 +332,7 @@
     }
 
     return fetch(_params).then(function () {
-
-      // structure changed: render all comments
-      if ( hasMoreComment ) {
-        console.info('Comments structure has been changed. Update all comments.');
-        LJ.Event.trigger('comments:update');
-      } else {
-        console.info('Comments structure is not changed after expand. Update comments locally for the thread.');
-        LJ.Event.trigger('comment:update', _toHash(thread));
-      }
+      LJ.Event.trigger('thread:update', key);
     });
   }
 
@@ -352,14 +342,13 @@
    */
   function collapse(comment) {
     var key = __key(comment);
-    var thread = getThread(key);
 
     // keep model up-to-date
-    thread.forEach(function (key) {
+    getThread(key).forEach(function (key) {
       _comments[key].collapsed = 1;
     });
 
-    LJ.Event.trigger('comment:update', _toHash(thread));
+    LJ.Event.trigger('thread:update', key);
   }
 
   function debugInfo(comment) {
