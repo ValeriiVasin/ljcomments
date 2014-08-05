@@ -53,7 +53,7 @@
     if ( _pages[page] ) {
       defer.resolve({
         replycount: 0,
-        comments: getTree(page)
+        threads: getThreadsForPage(page)
       });
 
       return defer.promise();
@@ -68,7 +68,7 @@
 
       defer.resolve({
         replies: response.replycount,
-        comments: getTree(page)
+        threads: getThreadsForPage(page)
       });
     }, defer.reject);
 

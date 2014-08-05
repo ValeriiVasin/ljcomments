@@ -60,7 +60,7 @@ var CommentBox = React.createClass({
 
         that.setState({
           loading: false,
-          threads: Comments.getThreadsForPage(page),
+          threads: result.threads,
           replies: result.replies
         });
     });
