@@ -40,7 +40,7 @@ var CommentBox = React.createClass({
       }
 
       this.setState({
-        comments: Comments.getTree(this.state.page)
+        threads: Comments.getThreadsForPage(this.state.page)
       });
     }, this);
   },
