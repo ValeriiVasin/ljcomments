@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "protractor protractor.conf.js",
-    "start": "jsx -w src/ build/"
+    "start": "jsx -w src/ build/",
+    "test-init": "webdriver-manager start"
   },
   "repository": {
     "type": "git",
