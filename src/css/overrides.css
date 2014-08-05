@@ -1,0 +1,6 @@
+.b-grove-loading .b-tree-thread {
+  display: none;
+}
+.b-grove-loading .b-tree {
+  min-height: 400px;
+}

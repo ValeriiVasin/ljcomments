@@ -809,7 +809,9 @@ var LinkBox = React.createClass({
   }
 });
 
-React.renderComponent(
-  <CommentBox url="http://tema.livejournal.com/1720831.html" />,
-  document.getElementById('content')
-);
+$(function () {
+  React.renderComponent(
+    <CommentBox url="http://tema.livejournal.com/1720831.html" />,
+    document.getElementById('content')
+  );
+})

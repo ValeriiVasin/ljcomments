@@ -12,5 +12,14 @@
     "url": "git@github.com:ValeriiVasin/ljcomments.git"
   },
   "author": "Valerii Vasin",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^3.8.7",
+    "gulp-concat": "^2.3.4",
+    "gulp-csso": "^0.2.9",
+    "gulp-plumber": "^0.6.4",
+    "gulp-react": "^0.5.0",
+    "gulp-uglifyjs": "^0.4.2",
+    "gulp-watch": "^0.6.9"
+  }
 }
