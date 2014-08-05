@@ -122,11 +122,17 @@
    * @param  {Number} page     Page number
    */
   function savePage(comments, page) {
+    console.log('save page', comments, page);
     _pages[page] = comments.filter(function (comment) {
       return comment.level === 1;
     }).map(function (comment) {
       return __key(comment);
     });
+  }
+
+  function getThreadsForPage(page) {
+    console.log('get threads for page: ', page,  _pages[page]);
+    return _pages[page];
   }
 
   function parse(comments) {
@@ -176,7 +182,7 @@
    * @param  {Number} dtalkid Talk id
    * @return {Array}          Array of childs
    */
-  function _getChilds(dtalkid) {
+  function getChildren(dtalkid) {
     var result = [];
 
     $.each(parents, function (key, value) {
@@ -236,7 +242,7 @@
 
     var result = [dtalkid];
 
-    _getChilds(dtalkid).forEach(function (child) {
+    getChildren(dtalkid).forEach(function (child) {
       Array.prototype.push.apply(
         result, getThread(child)
       );
@@ -395,6 +401,9 @@
     getComment: getComment,
     getThread:  getThread,
     getTree:    getTree,
+    getChildren: getChildren,
+
+    getThreadsForPage: getThreadsForPage,
 
     setUrl:    setUrl,
     fetchPage: fetchPage,

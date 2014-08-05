@@ -4,14 +4,17 @@ var STAT_PREFIX = 'http://stat.livejournal.com';
 var IS_REMOTE_SUP = true;
 var cx = React.addons.classSet;
 
+/**
+ * <CommentList threads={threads} />
+ */
 var CommentList = React.createClass({
   render: function() {
-    var comments = this.props.comments.map(function (comment) {
-      return <Twig comment={comment} key={comment.dtalkid} />;
+    var threads = this.props.threads.map(function (dtalkid) {
+      return <Thread dtalkid={dtalkid} key={dtalkid} />;
     }, this);
 
     return (
-      <div className="b-tree b-tree-root">{comments}</div>
+      <div className="b-tree b-tree-root">{threads}</div>
     );
   }
 });
@@ -20,7 +23,7 @@ var CommentBox = React.createClass({
   getInitialState: function () {
     return {
       replies:  0,
-      comments: [],
+      threads: [],
       page: 1,
       loading: true
     };
@@ -45,6 +48,10 @@ var CommentBox = React.createClass({
   loadCommentsFromServer: function(page) {
     var that = this;
 
+    if ( typeof page === 'undefined' ) {
+      page = 1;
+    }
+
     this.setState({ loading: true });
     Comments.fetchPage(page).then(function (result) {
         if ( !that.isMounted() ) {
@@ -52,9 +59,9 @@ var CommentBox = React.createClass({
         }
 
         that.setState({
-          loading:  false,
-          comments: result.comments,
-          replies:  result.replies
+          loading: false,
+          threads: Comments.getThreadsForPage(page),
+          replies: result.replies
         });
     });
   },
@@ -75,7 +82,51 @@ var CommentBox = React.createClass({
     return (
       <div id="comments" className={classes}>
         <CommentPaginator pages={10} count={this.state.replies} change={this.changePage} />
-        <CommentList comments={this.state.comments} />
+        <CommentList threads={this.state.threads} />
+      </div>
+    );
+  }
+});
+
+/**
+ * <Thread dtalkid={dtalkid} />
+ */
+var Thread = React.createClass({
+  getInitialState: function () {
+    return {
+      comment:  Comments.getComment(this.props.dtalkid),
+      children: Comments.getChildren(this.props.dtalkid)
+    };
+  },
+
+  updateThread: function (dtalkid) {
+    if ( this.props.dtalkid !== dtalkid ) {
+      return;
+    }
+
+    this.setState({
+      comment:  Comments.getComment(this.props.dtalkid),
+      children: Comments.getChildren(this.props.dtalkid)
+    });
+  },
+
+  componentDidMount: function () {
+    LJ.Event.on('thread:update', this.updateThread);
+  },
+
+  componentWillUnmount: function () {
+    LJ.Event.off('thread:update', this.updateThread);
+  },
+
+  render: function () {
+    var childrenThreads = this.state.children.map(function (dtalkid) {
+      return <Thread dtalkid={dtalkid} key={dtalkid} />;
+    });
+
+    return (
+      <div className="b-tree-thread">
+        <Twig comment={this.state.comment} />
+        { childrenThreads }
       </div>
     );
   }
