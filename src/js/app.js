@@ -212,41 +212,55 @@ var Twig = React.createClass({
  * Statement: comment.more
  */
 var CommentMore = React.createClass({
+  getInitialState: function () {
+    return {
+      expanding: false
+    };
+  },
+
+  expand: function (event) {
+    console.time('expand more');
+    event.preventDefault();
+
+    var that = this;
+    this.setState({ expanding: true });
+    Comments.expand(this.props.comment).then(function () {
+      console.timeEnd('expand more');
+    });
+  },
+
   render: function () {
     var comment = this.props.comment;
 
     var leafClass = {
       'b-leaf': true,
-      'b-leaf-seemore': true
+      'b-leaf-seemore': true,
+      'b-leaf-expanding': this.state.expanding
     };
     leafClass['b-leaf-seemore-' + comment.moreclass] = comment.moreclass;
 
     // actions
     if ( comment.actions ) {
       var actions = comment.actions.map(function (action) {
-        var href = action.href ? action.href : '#';
-
         return (
           <span className="b-leaf-seemore-more">
             <a
-              href={href}
+              href="javascript:void(0)"
               rel="nofollow"
               className="b-pseudo"
+              onClick={this.expand}
               >{action.title}</a>
           </span>
         );
-      });
-
-      // expand action
-      var href = comment.actions[0].href;
-      href = href || '#';
+      }, this);
 
       var expand = [
         <span className="b-leaf-seemore-expand">
           <a
-            href={href}
+            href="javascript:void(0)"
             rel="nofollow"
             className="b-pseudo"
+            onClick={this.expand}
             >ml('talk.expandlink')</a>
         </span>
       ];

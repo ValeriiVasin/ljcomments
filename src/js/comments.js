@@ -76,6 +76,7 @@
   }
 
   function fetch(params) {
+    console.time('fetch');
     var endpoint = 'http://' + params.journal + '.livejournal.com/' +
                     params.journal + '/__rpc_get_thread';
 
@@ -93,6 +94,7 @@
     var url = 'http://jsonp.jit.su/?url=' + encodeURIComponent(endpoint + query) + '&callback=?';
 
     var defer = $.Deferred();
+
     console.log('fetch url:', url);
     $.ajax({
       url: url,
@@ -284,11 +286,50 @@
   }
 
   /**
+   * Comment index between same level childrens
+   * @param  {Number} key Dtalkid
+   * @return {Number}     Index
+   */
+  function getIndex(key) {
+    var parent = parents[key];
+
+    return getChildren(parent).indexOf(key);
+  }
+
+  /**
+   * Expand comment MORE type
+   * @param  {Object} comment Comment object
+   * @return {Promise}        Promise that will be resolved when comment fetched
+   */
+  function _expandMore(comment) {
+    var key    = __key(comment);
+    var index  = getIndex(key);
+    var parent = parents[key];
+
+    // request params
+    var _params = {
+      thread:     parent,
+      expand_all: 1,
+      journal:    params.journal,
+      itemid:     params.itemid,
+      skip:       index + 1
+    };
+
+    return fetch(_params).then(function () {
+      LJ.Event.trigger('thread:update', parent);
+    });
+  }
+
+  /**
    * Expand provided comment
    * @param  {Object} comment Comment
    * @return {Promise}        Promise that will be resolved when comment fetched
    */
   function expand(comment) {
+    if ( comment.more ) {
+      return _expandMore(comment);
+    }
+
     var key = __key(comment);
 
     // request params
