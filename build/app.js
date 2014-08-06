@@ -212,41 +212,55 @@ var Twig = React.createClass({displayName: 'Twig',
  * Statement: comment.more
  */
 var CommentMore = React.createClass({displayName: 'CommentMore',
+  getInitialState: function () {
+    return {
+      expanding: false
+    };
+  },
+
+  expand: function (event) {
+    console.time('expand more');
+    event.preventDefault();
+
+    var that = this;
+    this.setState({ expanding: true });
+    Comments.expand(this.props.comment).then(function () {
+      console.timeEnd('expand more');
+    });
+  },
+
   render: function () {
     var comment = this.props.comment;
 
     var leafClass = {
       'b-leaf': true,
-      'b-leaf-seemore': true
+      'b-leaf-seemore': true,
+      'b-leaf-expanding': this.state.expanding
     };
     leafClass['b-leaf-seemore-' + comment.moreclass] = comment.moreclass;
 
     // actions
     if ( comment.actions ) {
       var actions = comment.actions.map(function (action) {
-        var href = action.href ? action.href : '#';
-
         return (
           React.DOM.span({className: "b-leaf-seemore-more"}, 
             React.DOM.a({
-              href: href, 
+              href: "javascript:void(0)", 
               rel: "nofollow", 
-              className: "b-pseudo"
+              className: "b-pseudo", 
+              onClick: this.expand
               }, action.title)
           )
         );
-      });
-
-      // expand action
-      var href = comment.actions[0].href;
-      href = href || '#';
+      }, this);
 
       var expand = [
         React.DOM.span({className: "b-leaf-seemore-expand"}, 
           React.DOM.a({
-            href: href, 
+            href: "javascript:void(0)", 
             rel: "nofollow", 
-            className: "b-pseudo"
+            className: "b-pseudo", 
+            onClick: this.expand
             }, "ml('talk.expandlink')")
         )
       ];
@@ -894,6 +908,7 @@ $(function () {
   }
 
   function fetch(params) {
+    console.time('fetch');
     var endpoint = 'http://' + params.journal + '.livejournal.com/' +
                     params.journal + '/__rpc_get_thread';
 
@@ -911,6 +926,7 @@ $(function () {
     var url = 'http://jsonp.jit.su/?url=' + encodeURIComponent(endpoint + query) + '&callback=?';
 
     var defer = $.Deferred();
+
     console.log('fetch url:', url);
     $.ajax({
       url: url,
@@ -1102,11 +1118,50 @@ $(function () {
   }
 
   /**
+   * Comment index between same level childrens
+   * @param  {Number} key Dtalkid
+   * @return {Number}     Index
+   */
+  function getIndex(key) {
+    var parent = parents[key];
+
+    return getChildren(parent).indexOf(key);
+  }
+
+  /**
+   * Expand comment MORE type
+   * @param  {Object} comment Comment object
+   * @return {Promise}        Promise that will be resolved when comment fetched
+   */
+  function _expandMore(comment) {
+    var key    = __key(comment);
+    var index  = getIndex(key);
+    var parent = parents[key];
+
+    // request params
+    var _params = {
+      thread:     parent,
+      expand_all: 1,
+      journal:    params.journal,
+      itemid:     params.itemid,
+      skip:       index + 1
+    };
+
+    return fetch(_params).then(function () {
+      LJ.Event.trigger('thread:update', parent);
+    });
+  }
+
+  /**
    * Expand provided comment
    * @param  {Object} comment Comment
    * @return {Promise}        Promise that will be resolved when comment fetched
    */
   function expand(comment) {
+    if ( comment.more ) {
+      return _expandMore(comment);
+    }
+
     var key = __key(comment);
 
     // request params
