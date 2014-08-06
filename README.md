@@ -1,6 +1,6 @@
 *Experimental LJ Comments implementations.*
 
-React
+[React](http://valeriivasin.github.io/ljcomments/)
 -----
 
 ```bash
