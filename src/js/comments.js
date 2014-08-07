@@ -1,3 +1,4 @@
+/*global ApiTransport*/
 /**
  * Comments factory
  */
@@ -6,6 +7,7 @@
 
   var IS_DEBUG_MODE = false;
 
+  ApiTransport.patch();
 
   // parents cache
   var parents = {};
@@ -77,45 +79,12 @@
 
   function fetch(params) {
     console.time('fetch');
-    var endpoint = 'http://' + params.journal + '.livejournal.com/' +
-                    params.journal + '/__rpc_get_thread';
 
-    var query = '';
-    $.each(params, function (key, value) {
-      if (query.length === 0) {
-        query = '?';
-      } else {
-        query += '&';
-      }
-
-      query += key + '=' + value;
+    return LJ.Api.call('comment.get_thread', params).then(function (response) {
+      console.timeEnd('fetch');
+      parse( response.comments );
+      return response;
     });
-
-    var url = 'http://jsonp.jit.su/?url=' + encodeURIComponent(endpoint + query) + '&callback=?';
-
-    var defer = $.Deferred();
-
-    console.log('fetch url:', url);
-    $.ajax({
-      url: url,
-      dataType: 'jsonp',
-      success: function (response) {
-        console.timeEnd('fetch');
-
-        if ( response.error ) {
-          console.error('date error', response);
-          return;
-        }
-
-        // parse levels and add margins
-        parse( response.comments );
-
-        defer.resolve(response);
-      },
-      error: defer.reject
-    });
-
-    return defer.promise();
   }
 
   /**
