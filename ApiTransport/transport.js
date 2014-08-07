@@ -3,9 +3,21 @@
 
   // api response timeout
   var TIMEOUT = 10000;
+  var INIT_TIMEOUT = 30000;
 
   var initDefer = $.Deferred(),
-      initPromise = initDefer.promise();
+      initPromise = initDefer.promise(),
+      isInitialized = false;
+
+  console.time('ApiTransport initialization');
+  setTimeout(function () {
+    var error = new Error('ApiTransport was not initialized. Check that you installed and enabled userscript.');
+
+    if ( !isInitialized ) {
+      initDefer.reject(error);
+      throw error;
+    }
+  }, INIT_TIMEOUT);
 
   /**
    * Define a namespace.
@@ -41,7 +53,9 @@
     if (data.type === 'init') {
 
       // initialization finished
-      console.info('[Transport] Initialization finished', data);
+      console.info('[Transport] Initialization finished');
+      console.timeEnd('ApiTransport initialization');
+      isInitialized = true;
       initDefer.resolve();
       return;
     }
