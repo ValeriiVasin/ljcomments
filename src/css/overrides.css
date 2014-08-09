@@ -1,3 +1,7 @@
+BODY {
+  padding: 30px;
+}
+
 .b-grove-loading .b-tree-thread {
   display: none;
 }
