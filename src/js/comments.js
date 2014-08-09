@@ -191,13 +191,17 @@
 
   /**
    * Invalidate thread cache
-   * Notice: all parent threads should be invalidated as well
+   * Notice: all parents/childen threads should be invalidated as well
    * @param  {Number} key Talk id
    */
   function _invalidateThread(key) {
     delete _threads[key];
 
     _getParents(key).forEach(function (key) {
+      delete _threads[key];
+    });
+
+    getChildren(key).forEach(function (key) {
       delete _threads[key];
     });
   }
@@ -406,6 +410,48 @@
     });
   }
 
+  /**
+   * Freeze/unfreeze the comment
+   * @param  {Number} dtalkid Dtalkid of the comments
+   * @param  {Boolean} state  State of freezing
+   * @return {Promise}        Promise that will be resolved when action comleted
+   */
+  function freeze(dtalkid, state) {
+    return rpc('talkscreen', {
+      mode: state ? 'freeze' : 'unfreeze',
+      talkid: dtalkid,
+      journal: params.journal,
+      format: 'json',
+
+      // crazy param that is needed to confirm auth
+      confirm: 'Y'
+    }, 'POST').then(function () {
+      // because of current architecture - we should fetch whole thread for update
+      var expanded = getThread(dtalkid).filter(function (key) {
+        var comment = getComment(key);
+
+        // MORE comments do not have collapsed prop
+        return comment.hasOwnProperty('collapsed') && !comment.collapsed;
+      });
+
+      return fetch({
+        // fetch single comment
+        thread: dtalkid,
+        expand_all: 1
+      }).then(function () {
+        // mark all comments as collapsed, besides previously expanded
+        _invalidateThread(dtalkid);
+
+        getThread(dtalkid).forEach(function (key) {
+          updateComment(key, { collapsed: expanded.indexOf(key) === -1 ? 1 : 0 });
+          console.log(getComment(key).collapsed);
+        });
+
+        LJ.Event.trigger('thread:update', dtalkid);
+      });
+    });
+  }
+
   function updateComment(dtalkid, props) {
     _comments[dtalkid] = $.extend(_comments[dtalkid] || {}, props);
   }
@@ -430,6 +476,7 @@
 
     // controls actions
     screen: screen,
+    freeze: freeze,
 
     debugInfo: debugInfo
   };

@@ -616,6 +616,18 @@ var CommentControl = React.createClass({
           LJ.Event.trigger('comment:processing:end', key)
         });
         break;
+      case 'freeze':
+        LJ.Event.trigger('comment:processing:start', key);
+        Comments.freeze(key, true).then(function () {
+          LJ.Event.trigger('comment:processing:end', key)
+        });
+        break;
+      case 'unfreeze':
+        LJ.Event.trigger('comment:processing:start', key);
+        Comments.freeze(key, false).then(function () {
+          LJ.Event.trigger('comment:processing:end', key)
+        });
+        break;
     }
   },
 
