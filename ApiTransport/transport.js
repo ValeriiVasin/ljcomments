@@ -101,6 +101,24 @@
     });
   }
 
+  function rpc(method, params, callback) {
+    return initPromise.then(function () {
+      return sendMessage({
+        type: 'rpc',
+        message: {
+          method: method,
+          params: params
+        }
+      }).then(function (response) {
+        if ( typeof callback === 'function' ) {
+          callback(response);
+        }
+
+        return response;
+      });
+    });
+  }
+
   var requestId = 0;
   var defers = {};
   /**
@@ -152,6 +170,7 @@
     patch: patch,
     patchBack: patchBack,
 
-    api: api
+    api: api,
+    rpc: rpc
   };
 }(jQuery));

@@ -33,14 +33,33 @@
     var request;
 
     if (data.type === 'api') {
-      console.log('[Userscript] Api request received...', data.message);
-
       request = data.message;
+      console.log('[Userscript] Api request received...', request);
+
       LJ.Api.call(request.method, request.params, function (response) {
-        console.log('[Userscript] request processed... ', response);
+        console.log('[Userscript] Api request processed... ', response);
 
         sendMessage({
           type: 'api',
+          id: data.id,
+          message: response
+        });
+      });
+    }
+
+    if (data.type === 'rpc') {
+      request = data.message;
+      console.log('[Userscript] Rpc request received', request);
+
+      $.ajax({
+        url: LiveJournal.getAjaxUrl(request.method),
+        data: request.params,
+        dataType: 'json'
+      }).then(function (response) {
+        console.log('[Userscript] Rpc request processed... ', response);
+
+        sendMessage({
+          type: 'rpc',
           id: data.id,
           message: response
         });
