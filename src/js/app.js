@@ -148,10 +148,10 @@ var Twig = React.createClass({
     };
   },
 
-  updateComment: function (commentIdsObj) {
+  updateComment: function (dtalkid) {
     var key = Comments.key(this.state.comment);
 
-    if ( commentIdsObj[ key ] ) {
+    if ( key === dtalkid ) {
       this.setState({
         comment: Comments.getComment(key)
       });
@@ -315,7 +315,7 @@ var CommentClipped = React.createClass({
     var comment = this.props.comment;
 
     var controls = this.props.comment.controls ?
-                   <CommentControls controls={this.props.comment.controls} /> :
+                   <CommentControls comment={this.props.comment} /> :
                    <span className="null" />;
 
     var leafClass = {
@@ -362,7 +362,10 @@ var CommentNormal = React.createClass({
       hovered: false,
 
       // loading comment
-      expanding: false
+      expanding: false,
+
+      // some action is currently happening on comment; e.g. screen, freeze
+      processing: false
     };
   },
 
@@ -382,14 +385,34 @@ var CommentNormal = React.createClass({
     this.setState({ expanding: false });
   },
 
+  processingStart: function (key) {
+    if ( Comments.key(this.props.comment) !== key ) {
+      return;
+    }
+
+    this.setState({ processing: true });
+  },
+
+  processingEnd: function (key) {
+    if ( Comments.key(this.props.comment) !== key ) {
+      return;
+    }
+
+    this.setState({ processing: false });
+  },
+
   componentDidMount: function () {
     LJ.Event.on('comment:expand:start', this.expandStart);
     LJ.Event.on('comment:expand:end', this.expandEnd);
+    LJ.Event.on('comment:processing:start', this.processingStart);
+    LJ.Event.on('comment:processing:end', this.processingEnd);
   },
 
   componentWillUnmount: function () {
     LJ.Event.off('comment:expand:start', this.expandStart);
     LJ.Event.off('comment:expand:end', this.expandEnd);
+    LJ.Event.off('comment:processing:start', this.processingStart);
+    LJ.Event.off('comment:processing:end', this.processingEnd);
   },
 
   onMouseEnter: function () {
@@ -408,6 +431,7 @@ var CommentNormal = React.createClass({
       'b-leaf':                true,
       'b-leaf-hover':          this.state.hovered,
       'b-leaf-expanding':      this.state.expanding,
+      'b-leaf-processing':     this.state.processing,
       'b-leaf-collapsed':      comment.collapsed,
       'b-leaf-suspended':      comment.suspended,
       'b-leaf-tracked':        comment.tracked,
@@ -465,7 +489,7 @@ var CommentNormal = React.createClass({
     }
 
     if ( comment.loaded ) {
-      details.push(<CommentControls controls={comment.controls} />);
+      details.push(<CommentControls comment={comment} />);
     }
 
     return (
@@ -541,21 +565,23 @@ var CommentUserpic = React.createClass({
 });
 
 /**
- * <CommentControls controls={controls} />
+ * <CommentControls comment={comment} />
  */
 var CommentControls = React.createClass({
   render: function () {
-    if ( !this.props.controls ) {
-      return <span className="null" />;
+    var comment = this.props.comment;
+
+    if ( !comment.controls ) {
+      return null;
     }
 
     var controls = [];
 
-    this.props.controls.forEach(function (control) {
+    comment.controls.forEach(function (control) {
       if ( control.allowed ) {
-        controls.push(<CommentControl control={control} />);
+        controls.push(<CommentControl control={control} comment={comment} key={control.name} />);
       }
-    });
+    }, this);
 
     return (
       <ul className="b-leaf-controls">{controls}</ul>
@@ -564,9 +590,35 @@ var CommentControls = React.createClass({
 });
 
 /**
- * <CommentControl control={control} />
+ * <CommentControl comment={comment} control={control} />
  */
 var CommentControl = React.createClass({
+  clickControl: function (event) {
+    event.preventDefault();
+
+    var key = Comments.key(this.props.comment);
+
+    console.log(this.props.control);
+    var name = this.props.control.name;
+
+    // delete, spam, freeze, screen, track
+
+    switch (this.props.control.name) {
+      case 'screen':
+        LJ.Event.trigger('comment:processing:start', key);
+        Comments.screen(key, true).then(function () {
+          LJ.Event.trigger('comment:processing:end', key)
+        });
+        break;
+      case 'unscreen':
+        LJ.Event.trigger('comment:processing:start', key);
+        Comments.screen(key, false).then(function () {
+          LJ.Event.trigger('comment:processing:end', key)
+        });
+        break;
+    }
+  },
+
   render: function () {
     var href = this.props.control.href ? this.props.control.href : '#';
 
@@ -577,6 +629,7 @@ var CommentControl = React.createClass({
             title={this.props.control.title}
             href={href}
             rel="nofollow"
+            onClick={this.clickControl}
             ><i className="b-controls-bg"></i>{this.props.control.title}</a>
       </li>
     );
@@ -934,7 +987,8 @@ var CommentForm = React.createClass({
 
 $(function () {
   React.renderComponent(
-    <CommentBox url="http://tema.livejournal.com/1720831.html" />,
+    /* <CommentBox url="http://tema.livejournal.com/1720831.html" /> */
+    <CommentBox url="http://valerii.livejournal.com/23424.html" />,
     document.getElementById('content')
   );
 })

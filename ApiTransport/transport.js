@@ -101,20 +101,15 @@
     });
   }
 
-  function rpc(method, params, callback) {
+  function rpc(method, params, type) {
     return initPromise.then(function () {
       return sendMessage({
         type: 'rpc',
+        requestType: type || 'GET',
         message: {
           method: method,
           params: params
         }
-      }).then(function (response) {
-        if ( typeof callback === 'function' ) {
-          callback(response);
-        }
-
-        return response;
       });
     });
   }

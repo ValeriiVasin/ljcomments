@@ -62,8 +62,6 @@
     }
 
     fetch({
-      itemid: params.itemid,
-      journal: params.journal,
       page: page
     }).then(function (response) {
       savePage(response.comments, page);
@@ -77,10 +75,15 @@
     return defer.promise();
   }
 
-  function fetch(params) {
+  function fetch(_params) {
     console.time('fetch');
 
-    return rpc('get_thread', params).then(function (response) {
+    _params = $.extend({
+      itemid: params.itemid,
+      journal: params.journal
+    }, _params);
+
+    return rpc('get_thread', _params).then(function (response) {
       console.timeEnd('fetch');
       parse( response.comments );
       return response;
@@ -304,9 +307,7 @@
     // request params
     var _params = {
       thread: key,
-      expand_all: 1,
-      journal: params.journal,
-      itemid: params.itemid
+      expand_all: 1
     };
 
     var thread = getThread( key );
@@ -378,18 +379,35 @@
   }
 
   /**
-   * Utility function that converts array of strings/numbers to
-   * dictionary, where the strings/numbers are keys and `true` is the value
-   * @return {Object} Dictionary
-   *
-   * @example
-   *   _toHash([123, 456]); // => { '123': true, '456': true }
+   * Screen/unscreen comment
+   * @param  {Number} dtalkid Comment dtalkid
+   * @param  {Boolean} state  State of screening: true - screen, false - unscreen
+   * @return {Promise}        Promise that will be resolved when action completed
    */
-  function _toHash(arr) {
-    return arr.reduce(function (result, value) {
-      result[value] = true;
-      return result;
-    }, {});
+  function screen(dtalkid, state) {
+    return rpc('talkscreen', {
+      mode: state ? 'screen' : 'unscreen',
+      talkid: dtalkid,
+      journal: params.journal,
+      format: 'json',
+
+      // crazy param that is needed to confirm auth
+      confirm: 'Y'
+    }, 'POST').then(function () {
+      // because of current architecture - we should fetch single comment for update
+      // Note: we could not update controls array at the moment
+      return fetch({
+        // fetch single comment
+        flat: 1,
+        thread: dtalkid
+      }).then(function () {
+        LJ.Event.trigger('comment:update', dtalkid);
+      });
+    });
+  }
+
+  function updateComment(dtalkid, props) {
+    _comments[dtalkid] = $.extend(_comments[dtalkid] || {}, props);
   }
 
   window.Comments = {
@@ -409,6 +427,9 @@
 
     expand: expand,
     collapse: collapse,
+
+    // controls actions
+    screen: screen,
 
     debugInfo: debugInfo
   };

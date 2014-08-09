@@ -50,11 +50,17 @@
     if (data.type === 'rpc') {
       request = data.message;
       console.log('[Userscript] Rpc request received', request);
+      var authToken = $('[name=lj_form_auth]').val();
+
+      console.log('[Userscript] Auth token: %s', authToken);
 
       $.ajax({
         url: LiveJournal.getAjaxUrl(request.method),
-        data: request.params,
-        dataType: 'json'
+
+        // token is needed for all requests that modify something
+        data: $.extend(request.params, { lj_form_auth: authToken }),
+        dataType: 'json',
+        type: data.requestType
       }).then(function (response) {
         console.log('[Userscript] Rpc request processed... ', response);
 
