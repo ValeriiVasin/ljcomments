@@ -7,7 +7,7 @@
 
   var IS_DEBUG_MODE = false;
 
-  ApiTransport.patch();
+  var rpc = ApiTransport.rpc;
 
   // parents cache
   var parents = {};
@@ -80,7 +80,7 @@
   function fetch(params) {
     console.time('fetch');
 
-    return LJ.Api.call('comment.get_thread', params).then(function (response) {
+    return rpc('get_thread', params).then(function (response) {
       console.timeEnd('fetch');
       parse( response.comments );
       return response;
