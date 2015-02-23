@@ -4,7 +4,7 @@
 -----
 
 ```bash
-npm install -g react-tools
+npm install
 python -m SimpleHTTPServer 8000
 npm start
 ```

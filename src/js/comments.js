@@ -456,7 +456,7 @@
     _comments[dtalkid] = $.extend(_comments[dtalkid] || {}, props);
   }
 
-  window.Comments = {
+  module.exports = {
     key: __key,
 
     parse: parse,
@@ -480,4 +480,4 @@
 
     debugInfo: debugInfo
   };
-}());
+})();
